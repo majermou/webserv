@@ -8,7 +8,7 @@ int main(int argc, char **argv)
 		ConfigParser parser(argc, argv);
 		Server webserv(parser.getServers());
 
-		 webserv.run();
+		webserv.run();
 	}
 	catch (std::exception &e)
 	{
