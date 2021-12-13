@@ -1,4 +1,4 @@
-#include "Webserv.hpp"
+#include "../includes/Location.hpp"
 
 char const *Location::standard_allowed_methods[3] = {
 	"GET",
