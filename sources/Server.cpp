@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 13:24:54 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/13 16:28:47 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/13 19:48:27 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,16 +26,13 @@ std::vector<int> getAllPorts(const std::vector<ServerData> &data)
 {
 	size_t i;
 	std::vector<int> allPorts;
-	std::vector<int> svPorts;
 
 	i = 0;
 	while (i < data.size())
 	{
-		svPorts = data[i++].getPorts();
-		reverse(svPorts.begin(), svPorts.end());
-		allPorts.insert(allPorts.begin(), svPorts.begin(), svPorts.end());
+		allPorts.push_back(data[i].getPort());
+		i++;
 	}
-	reverse(allPorts.begin(), allPorts.end());
 	return (allPorts);
 }
 
