@@ -1,8 +1,8 @@
 #ifndef SERVER_DATA_HPP
 #define SERVER_DATA_HPP
 
+#include "Location.hpp"
 #include "Webserv.hpp"
-
 #define NUMBER_OF_NECESSARY_ELEMENTS 3
 
 #define PORT_NECESSITY_NUMBER 0
@@ -61,4 +61,4 @@ public:
 
 std::ostream &operator<<(std::ostream &, const ServerData &);
 
-#endif // !SERVER_DATA_HPP
+#endif  // !SERVER_DATA_HPP
