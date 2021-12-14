@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 13:24:54 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/13 19:48:27 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/14 15:20:27 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,20 @@
  * the TIME_WAIT state), go ahead and reuse it anyway.  If it is busy,
  * but with another state, you will still get an address already in use
  * error
+ */
+
+/*
+ * Why FD_SET/FD_ZERO for select() inside of loop?
+ * When select returns, it has updated the sets to show which file descriptors
+ * have become ready for read/write/exception. All other flags have been
+ * cleared. It's important that you re-enable the file descriptors that were
+ * cleared prior to starting another select, otherwise, you will no longer be
+ * waiting on those file descriptors.
+ */
+
+/* FD_ISSET
+ * Returns a non-zero value if the file descriptor is set in the file descriptor
+ *  set pointed to by fdset; otherwise returns 0.
  */
 
 std::vector<int> getAllPorts(const std::vector<ServerData> &data)
@@ -70,10 +84,10 @@ void Server::run(void)
 			while (i < readyFds.size())
 			{
 				_rawRequest = "";
-				std::cout << "readyFds: " << readyFds[i] << std::endl;
-				while ((tmp = recv(readyFds[i], buf, _bufSize - 1, 0) > 0))
+				// std::cout << "readyFds: " << readyFds[i] << std::endl;
+				bzero(buf, _bufSize);
+				while ((tmp = recv(readyFds[i], buf, _bufSize - 1, 0) >= 0))
 				{
-					buf[tmp] = '\0';
 					_rawRequest += buf;
 				}
 				if (tmp < 0)

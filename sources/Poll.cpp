@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/11 15:48:46 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/13 19:30:03 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/14 15:12:02 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,19 +14,35 @@
 
 #include <cstdlib>
 
-Poll::Poll(void)
+#include "../includes/Webserv.hpp"
+
+Poll::Poll(void) : _addrInfoVal(nullptr)
 {
 }
 
 Poll::~Poll(void)
 {
-	// freeaddrinfo
+	std::vector<int>::iterator it;
+
+	it = _masterSockets.begin();
+	while (it != _masterSockets.end())
+	{
+		close(*it);
+		it++;
+	}
+	if (_addrInfoVal != nullptr)
+	freeaddrinfo(_addrInfoVal);
 }
 
-Poll::Poll(std::vector<int> ports) : _queue(10)
+/*
+ * set up socket fds for each port
+ * set socket as activefds so we can monitor them using select
+ */
+
+Poll::Poll(std::vector<int> ports) : _queue(10), _addrInfoVal(nullptr)
 {
 	struct addrinfo hint;
-	char tmpPort[20];
+	char tmpPort[11];
 	int ret;
 	int optval;
 	int i;
@@ -40,7 +56,7 @@ Poll::Poll(std::vector<int> ports) : _queue(10)
 		hint.ai_flags    = AI_PASSIVE;
 		hint.ai_family   = AF_INET;
 
-		bzero(tmpPort, 20);
+		bzero(tmpPort, 11);
 		sprintf(tmpPort, "%d", ports[i]);
 
 		ret = getaddrinfo(NULL, tmpPort, &hint, &_addrInfoVal);
@@ -49,20 +65,33 @@ Poll::Poll(std::vector<int> ports) : _queue(10)
 			_masterSockets.push_back(socket(_addrInfoVal->ai_family,
 			                                _addrInfoVal->ai_socktype,
 			                                _addrInfoVal->ai_protocol));
+			if (_masterSockets.back() < 0)
+			{
+				// error socket failed
+				// exit
+			}
 			optval = 1;
 			setsockopt(_masterSockets.back(), SOL_SOCKET, SO_REUSEADDR, &optval,
 			           sizeof(optval));
 
 			/******************************************************************/
 
-			bind(_masterSockets.back(), _addrInfoVal->ai_addr,
-			     _addrInfoVal->ai_addrlen);
+			if (bind(_masterSockets.back(), _addrInfoVal->ai_addr,
+			         _addrInfoVal->ai_addrlen) < 0)
+			{
+				// error bind failed
+				// exit
+			}
 			std::cout << "server listen on: "
 			          << ntohs(((struct sockaddr_in *)_addrInfoVal->ai_addr)
 			                       ->sin_port)
 			          << std::endl;
 			std::cout << strerror(errno) << std::endl;
-			listen(_masterSockets.back(), _queue);
+			if (listen(_masterSockets.back(), _queue) < 0)
+			{
+				// error listen failed
+				// exit
+			}
 			std::cout << "cur masterSocket: " << _masterSockets.back()
 			          << std::endl;
 			fcntl(_masterSockets.back(), F_SETFL, O_NONBLOCK);
@@ -79,6 +108,14 @@ Poll::Poll(std::vector<int> ports) : _queue(10)
 		i++;
 	}
 }
+
+/*
+ * copy activefds to readfds because select is distructive, we can't give it
+ * directly activefds it will overwrite it.
+ * select return ready to read from descriptors from activefds.
+ * check for incoming connection and add them to activefds so we can monitore...
+ * return all ready file descriptors
+ */
 
 std::vector<int> Poll::getReadyfds(void)
 {
