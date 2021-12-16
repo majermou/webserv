@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 13:24:54 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/14 15:20:27 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/16 10:44:45 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,26 +36,12 @@
  *  set pointed to by fdset; otherwise returns 0.
  */
 
-std::vector<int> getAllPorts(const std::vector<ServerData> &data)
-{
-	size_t i;
-	std::vector<int> allPorts;
-
-	i = 0;
-	while (i < data.size())
-	{
-		allPorts.push_back(data[i].getPort());
-		i++;
-	}
-	return (allPorts);
-}
-
 Server::Server(void) : _bufSize(1024)
 {
 }
 
 Server::Server(const std::vector<ServerData> &data)
-    : _mypool(getAllPorts(data)), _bufSize(1024)
+    : _mypool(data), _bufSize(1024)
 {
 }
 
@@ -72,12 +58,22 @@ void Server::run(void)
 	std::string response;
 
 	response =
-	    "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\nSIR "
-	    "T9WAD\n";
+	    "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n"
+	    "\n"
+	    "<div style=\"font-family: monospace; white-space: pre;\">"
+	    " _    _  _____ ______  _____  _____ ______  _   _ <br>"
+	    "| |  | ||  ___|| ___ \\/  ___||  ___|| ___ \\| | | |<br>"
+	    "| |  | || |__  | |_/ /\\ `--. | |__  | |_/ /| | | |<br>"
+	    "| |/\\| ||  __| | ___ \\ `--. \\|  __| |    / | | | |<br>"
+	    "\\  /\\  /| |___ | |_/ //\\__/ /| |___ | |\\ \\ \\ \\_/ /<br>"
+	    " \\/  \\/ \\____/ \\____/ \\____/ \\____/ \\_| \\_| \\___/ <br>"
+	    "</div>"
+	    "<style>body{margin-left: auto;margin-right: auto;max-width: "
+	    "1000px;}</style>";
+
 	while (1)
 	{
 		readyFds = _mypool.getReadyfds();
-
 		if (readyFds.size() > 0)
 		{
 			i = 0;
@@ -105,4 +101,3 @@ void Server::run(void)
 		}
 	}
 }
-
