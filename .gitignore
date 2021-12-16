@@ -2,3 +2,4 @@ logs.webserv
 outputParser
 .*.sw*
 a.out
+webserv.example.conf
