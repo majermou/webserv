@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 13:24:54 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/16 10:44:45 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/17 19:29:46 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,6 +56,7 @@ void Server::run(void)
 	int tmp;
 	char buf[_bufSize];
 	std::string response;
+	struct Ret r;
 
 	response =
 	    "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n"
@@ -91,6 +92,7 @@ void Server::run(void)
 					// error
 					// exit
 				}
+				response = (handleRequest(_rawRequest, _mypool.getData())).response;
 				send(readyFds[i], response.c_str(), response.length(), 0);
 				_mypool.clearActiveFd(readyFds[i]);
 				close(readyFds[i]);

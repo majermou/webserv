@@ -1,8 +1,13 @@
 #ifndef SERVER_DATA_HPP
 #define SERVER_DATA_HPP
 
+//#include "Webserv.hpp"
+#include <iostream>
+#include <map>
+#include <vector>
+
 #include "Location.hpp"
-#include "Webserv.hpp"
+
 #define NUMBER_OF_NECESSARY_ELEMENTS 3
 
 #define PORT_NECESSITY_NUMBER 0
