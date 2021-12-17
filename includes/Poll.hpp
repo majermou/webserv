@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/11 15:32:24 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/16 17:22:59 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/17 19:25:01 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@ public:
 	~Poll(void);
 	std::vector<int> getReadyfds(void);
 	void clearActiveFd(int fd);
+	std::vector<ServerData> &getData(void);
 };
 
 #endif /* ifndef POLL */

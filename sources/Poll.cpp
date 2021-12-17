@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/11 15:48:46 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/16 17:22:58 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/17 19:25:00 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -203,4 +203,9 @@ std::vector<int> Poll::getReadyfds(void)
 void Poll::clearActiveFd(int fd)
 {
 	FD_CLR(fd, &_activefds);
+}
+
+std::vector<ServerData> &Poll::getData(void)
+{
+	return (_data);
 }

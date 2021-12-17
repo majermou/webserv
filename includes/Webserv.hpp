@@ -38,9 +38,32 @@
 #include <string>
 #include <vector>
 
+#include "Location.hpp"
+#include "ServerData.hpp"
 #define log  std::cout <<
 #define line << std::endl
 
-void outputLogs(std::string logs);
+struct Ret
+{
+	std::string response;
+	bool connection;
+};
+struct Request
+{
+	std::string request_line;
+	std::multimap<std::string, std::string> request_headers;
+	std::string body;
+};
+
+struct Response
+{
+	std::string status_line;
+	std::map<std::string, std::string> response_headers;
+	std::string body;
+};
+
+struct Ret handleRequest(std::string buff, std::vector<ServerData> &data);
+
+    void outputLogs(std::string logs);
 
 #endif  // !WEBSERV_HPP
