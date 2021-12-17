@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/11 15:48:46 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/16 10:42:59 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/16 17:22:58 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,6 +84,8 @@ Poll::Poll(std::vector<ServerData> data)
 			           tmpAddrInfo->ai_protocol);
 			if (tmpMasterSocket < 0)
 			{
+				outputLogs(std::string("server socket: ") +
+				           std::string(strerror(errno)));
 				// error socket failed
 				// exit
 			}
@@ -96,6 +98,8 @@ Poll::Poll(std::vector<ServerData> data)
 			if (bind(tmpMasterSocket, tmpAddrInfo->ai_addr,
 			         tmpAddrInfo->ai_addrlen) < 0)
 			{
+				outputLogs(std::string("server bind: ") +
+				           std::string(strerror(errno)));
 				std::cout << strerror(errno) << std::endl;
 				// error bind failed
 			}
@@ -123,6 +127,8 @@ Poll::Poll(std::vector<ServerData> data)
 			else
 			{
 				freeaddrinfo(tmpAddrInfo);
+				outputLogs(std::string("server listen: ") +
+				           std::string(strerror(errno)));
 				// free tmpAddrInfo
 				// error listen failed
 				// exit
@@ -130,6 +136,8 @@ Poll::Poll(std::vector<ServerData> data)
 		}
 		else
 		{
+			outputLogs(std::string("server getaddrinfo: ") +
+			           std::string(strerror(errno)));
 			// print error
 			// program exit
 		}
