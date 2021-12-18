@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 11:34:23 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/15 13:39:39 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/18 15:10:07 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,8 @@ private:
 	// int _masterSocket;
 	// struct addrinfo *_addrinfoVal;
 	const int _bufSize;
-	std::string _rawRequest;
+	//std::string _rawRequest;
+	std::map<int, std::string> _rawRequest;
 };
 
 #endif /* ifndef Server_HPP*/

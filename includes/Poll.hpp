@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/11 15:32:24 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/17 19:25:01 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/18 15:08:59 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,6 @@ private:
 	int _queue;
 	std::vector<struct addrinfo> _addrInfoVal;
 	std::vector<ServerData> _data;
-
 public:
 	Poll(void);
 	Poll(std::vector<ServerData> data);
