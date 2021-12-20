@@ -1,5 +1,6 @@
 #include "includes/ConfigParser.hpp"
 #include "includes/Server.hpp"
+#include "includes/Webserv.hpp"
 
 int main(int argc, char **argv)
 {
@@ -12,6 +13,7 @@ int main(int argc, char **argv)
 	}
 	catch (std::exception &e)
 	{
+		outputLogs("main error: " + std::string(e.what()));
 		std::cout << e.what() << std::endl;
 	}
 	return (0);

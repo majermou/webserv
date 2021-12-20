@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/11 15:32:24 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/18 15:08:59 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/20 18:53:57 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,8 +23,9 @@ private:
 	fd_set _readfds;
 	fd_set _activefds;
 	int _queue;
-	std::vector<struct addrinfo> _addrInfoVal;
+	std::vector<struct sockaddr_in> _sockAddrVal;
 	std::vector<ServerData> _data;
+
 public:
 	Poll(void);
 	Poll(std::vector<ServerData> data);
