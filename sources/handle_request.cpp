@@ -15,7 +15,7 @@
 #define HeaderPairsDelim 	": "
 #define HTTP_VERSION     	"HTTP/1.1"
 
-
+struct Ret handle_DELETE_Request(Request &request, std::vector<ServerData> &data);
 
 
 std::string getToken(std::string &str, std::string delimiter)
@@ -192,7 +192,7 @@ struct Ret handle_GET_Request(Request &req, std::vector<ServerData> &data)
 		// CGI //
 
 		if (locations[j].getAllowedMethods().find("GET")->second == false)
-			return HandleErrors("405 Method Not Allowed");
+			return HandleErrors("405Not Allowed");
 		if (locations[j].getRootDir().empty()) {
 			path = data[i].getRootDir() + path;
 		} else {
@@ -270,11 +270,11 @@ struct Ret handleRequest(std::string buff, std::vector<ServerData> &data)
 	std::string method = getToken(request.request_line, SP);
 	if (method == "GET")
 		return handle_GET_Request(request, data);
-	// else if (method == "DELETE")
-	//     return handle_DELETE_Request(request);
+	else if (method == "DELETE")
+	    return handle_DELETE_Request(request, data);
 	// else if (method == "POST")
 	//     return handle_POST_Request(rq);
 	else if (method == "OPTIONS" || method == "HEAD" || method == "PUT" || method == "PATCH")
-		HandleErrors("501 Not Implemented");
+		return HandleErrors("501 Not Implemented");
 	return HandleErrors("400 Bad Request");
 }
