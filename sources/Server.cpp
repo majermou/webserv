@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 13:24:54 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/20 18:53:47 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/22 18:53:36 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ Server::Server(void) : _bufSize(1024)
 }
 
 Server::Server(const std::vector<ServerData> &data)
-    : _mypool(data), _bufSize(1024)
+    : _mypoll(data), _bufSize(1024)
 {
 }
 
@@ -84,7 +84,7 @@ void Server::run(void)
 	    "1000px;}</style>";
 	while (1)
 	{
-		readyFds = _mypool.getReadyfds();
+		readyFds = _mypoll.getReadyfds();
 		if (readyFds.size() > 0)
 		{
 			i = 0;
@@ -108,11 +108,11 @@ void Server::run(void)
 				if (checkCrlf(_rawRequest[readyFds[i]], readyFds[i]) == true)
 				{
 					response = (handleRequest(_rawRequest[readyFds[i]],
-					                          _mypool.getData()))
+					                          _mypoll.getData()))
 					               .response;
 					send(readyFds[i], response.c_str(), response.length(), 0);
 					_rawRequest.erase(readyFds[i]);
-					_mypool.clearActiveFd(readyFds[i]);
+					_mypoll.clearActiveFd(readyFds[i]);
 					close(readyFds[i]);
 				}
 				i++;
