@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/11 15:48:46 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/17 19:25:00 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/20 18:53:56 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 #include "../includes/ServerData.hpp"
 #include "../includes/Webserv.hpp"
 
-Poll::Poll(void) : _addrInfoVal()
+Poll::Poll(void) : _sockAddrVal()
 {
 }
 
@@ -53,93 +53,64 @@ std::vector<int> getAllPorts(const std::vector<ServerData> &data)
  */
 
 Poll::Poll(std::vector<ServerData> data)
-    : _queue(10), _addrInfoVal(), _data(data)
+    : _queue(10), _sockAddrVal(), _data(data)
 {
-	struct addrinfo hint;
-	struct addrinfo *tmpAddrInfo;
 	int tmpMasterSocket;
-	char tmpPort[11];
-	int ret;
 	int optval;
 	int i;
+	struct sockaddr_in server;
 
 	FD_ZERO(&_activefds);
 	i = 0;
 	while (i < _data.size())
 	{
-		memset(&hint, 0, sizeof(hint));
-		hint.ai_socktype = SOCK_STREAM;
-		hint.ai_flags    = AI_PASSIVE;
-		hint.ai_family   = AF_INET;
+		server.sin_family      = AF_INET;
+		server.sin_addr.s_addr = inet_addr(_data[i].getHost().c_str());
+		server.sin_port        = htons(_data[i].getPort());
 
-		bzero(tmpPort, 11);
-		sprintf(tmpPort, "%d", _data[i].getPort());
-		ret = getaddrinfo(_data[i].getHost().c_str(), tmpPort, &hint,
-		                  &tmpAddrInfo);
 		std::cout << _data[i].getHost().c_str() << std::endl;
-		if (ret == 0)
+		tmpMasterSocket = socket(AF_INET, SOCK_STREAM, 0);
+		if (tmpMasterSocket < 0)
 		{
-			tmpMasterSocket =
-			    socket(tmpAddrInfo->ai_family, tmpAddrInfo->ai_socktype,
-			           tmpAddrInfo->ai_protocol);
-			if (tmpMasterSocket < 0)
-			{
-				outputLogs(std::string("server socket: ") +
-				           std::string(strerror(errno)));
-				// error socket failed
-				// exit
-			}
-			optval = 1;
-			setsockopt(tmpMasterSocket, SOL_SOCKET, SO_REUSEADDR, &optval,
-			           sizeof(optval));
+			std::cout << strerror(errno) << std::endl;
+			// error socket failed
+			// exit
+		}
+		optval = 1;
+		setsockopt(tmpMasterSocket, SOL_SOCKET, SO_REUSEADDR, &optval,
+		           sizeof(optval));
 
-			/******************************************************************/
+		/******************************************************************/
 
-			if (bind(tmpMasterSocket, tmpAddrInfo->ai_addr,
-			         tmpAddrInfo->ai_addrlen) < 0)
-			{
-				outputLogs(std::string("server bind: ") +
-				           std::string(strerror(errno)));
-				std::cout << strerror(errno) << std::endl;
-				// error bind failed
-			}
-			else if (listen(tmpMasterSocket, _queue) == 0)
-			{
-				std::cout << "server listen on: "
-				          << ntohs(((struct sockaddr_in *)tmpAddrInfo->ai_addr)
-				                       ->sin_port)
-				          << std::endl;
-				std::cout << "cur masterSocket: " << tmpMasterSocket
-				          << std::endl;
-				fcntl(tmpMasterSocket, F_SETFL, O_NONBLOCK);
+		if (bind(tmpMasterSocket, (struct sockaddr *)&server, sizeof(server)) <
+		    0)
+		{
+			outputLogs(std::string("server bind: ") +
+			           std::string(strerror(errno)));
+			std::cout << strerror(errno) << std::endl;
+			// error bind failed
+		}
+		else if (listen(tmpMasterSocket, _queue) == 0)
+		{
+			std::cout << "server listen on: " << ntohs(server.sin_port)
+			          << std::endl;
+			std::cout << "cur masterSocket: " << tmpMasterSocket << std::endl;
+			fcntl(tmpMasterSocket, F_SETFL, O_NONBLOCK);
 
-				/**************************************************************/
+			/**************************************************************/
 
-				FD_SET(tmpMasterSocket, &_activefds);
+			FD_SET(tmpMasterSocket, &_activefds);
 
-				/**************************************************************/
-				_addrInfoVal.resize(_addrInfoVal.size() + 1);
-				memcpy(&_addrInfoVal.back(), tmpAddrInfo,
-				       sizeof(struct addrinfo));
-				_masterSockets.push_back(tmpMasterSocket);
-				freeaddrinfo(tmpAddrInfo);
-			}
-			else
-			{
-				freeaddrinfo(tmpAddrInfo);
-				outputLogs(std::string("server listen: ") +
-				           std::string(strerror(errno)));
-				// free tmpAddrInfo
-				// error listen failed
-				// exit
-			}
+			/**************************************************************/
+
+			_sockAddrVal.push_back(server);
+			_masterSockets.push_back(tmpMasterSocket);
 		}
 		else
 		{
-			outputLogs(std::string("server getaddrinfo: ") +
-			           std::string(strerror(errno)));
-			// print error
-			// program exit
+			std::cout << strerror(errno) << std::endl;
+			// error listen failed
+			// exit
 		}
 		i++;
 	}
@@ -159,6 +130,10 @@ std::vector<int> Poll::getReadyfds(void)
 	int i;
 	int slavesocket;
 	std::vector<int> res;
+	// char buf[1024];
+	std::map<int, std::string> _rawRequest;
+	std::string response;
+	unsigned int len;
 
 	memcpy(&_readfds, &_activefds, sizeof(_readfds));
 	sret = select(FD_SETSIZE, &_readfds, NULL, NULL, NULL);
@@ -168,12 +143,14 @@ std::vector<int> Poll::getReadyfds(void)
 	{
 		if (FD_ISSET(_masterSockets[i], &_readfds) != 0)
 		{
-			slavesocket = accept(_masterSockets[i], _addrInfoVal[i].ai_addr,
-			                     &_addrInfoVal[i].ai_addrlen);
+			len         = sizeof(struct sockaddr);
+			slavesocket = accept(_masterSockets[i],
+			                     ((struct sockaddr *)&_sockAddrVal[i]), &len);
 			if (slavesocket < 0)
 			{
-				// error accept
-				// exit
+				// outputLogs("getReadyfds error accept failed");
+				//  error accept
+				//  exit
 			}
 			else if (slavesocket > 0)
 			{
@@ -185,7 +162,6 @@ std::vector<int> Poll::getReadyfds(void)
 		}
 		i++;
 	}
-
 	i = 0;
 	while (i < FD_SETSIZE)
 	{

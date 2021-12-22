@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 13:24:54 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/18 19:12:03 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/20 18:53:47 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,8 +36,13 @@
  *  set pointed to by fdset; otherwise returns 0.
  */
 
-bool checkCrlf(std::string &req)
+#include <cstdio>
+
+bool checkCrlf(std::string &req, int fd)
 {
+	int i;
+
+	i = 0;
 	return (req.find("\r\n\r\n") != std::string::npos);
 }
 
@@ -77,7 +82,6 @@ void Server::run(void)
 	    "</div>"
 	    "<style>body{margin-left: auto;margin-right: auto;max-width: "
 	    "1000px;}</style>";
-
 	while (1)
 	{
 		readyFds = _mypool.getReadyfds();
@@ -86,30 +90,30 @@ void Server::run(void)
 			i = 0;
 			while (i < readyFds.size())
 			{
-				if (_rawRequest.find(i) == _rawRequest.end())
-					_rawRequest[i] = "";
-				// std::cout << "readyFds: " << readyFds[i] << std::endl;
+				if (_rawRequest.find(readyFds[i]) == _rawRequest.end())
+					_rawRequest[readyFds[i]] = "";
+
+				/**************************************************************/
+
 				bzero(buf, _bufSize);
 				while ((tmp = recv(readyFds[i], buf, _bufSize - 1, 0)) > 0)
 				{
-					// std::cout << tmp << " | " << buf << std::endl;
-					_rawRequest[i] += buf;
+					_rawRequest[readyFds[i]] += buf;
 				}
 				if (tmp < 0)
 				{
 					// error
 					// exit
 				}
-				//std::cout << "|" << _rawRequest[i] << "|" << std::endl;
-				if (checkCrlf(_rawRequest[i]) == true)
+				if (checkCrlf(_rawRequest[readyFds[i]], readyFds[i]) == true)
 				{
-					response =
-					    (handleRequest(_rawRequest[i], _mypool.getData()))
-					        .response;
+					response = (handleRequest(_rawRequest[readyFds[i]],
+					                          _mypool.getData()))
+					               .response;
 					send(readyFds[i], response.c_str(), response.length(), 0);
+					_rawRequest.erase(readyFds[i]);
 					_mypool.clearActiveFd(readyFds[i]);
 					close(readyFds[i]);
-					_rawRequest.erase(i);
 				}
 				i++;
 			}
