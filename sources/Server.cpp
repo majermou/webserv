@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 13:24:54 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/23 19:11:09 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/26 19:24:44 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,7 +99,7 @@ void Server::run(void)
 				while ((tmp = recv(readyFds[i], buf, _bufSize - 1, 0)) > 0)
 				{
 					_rawRequest[readyFds[i]] += buf;
-				}majermou
+				}
 				if (tmp < 0 && errno != EAGAIN)
 				{
 					outputLogs("server error recv: " +
