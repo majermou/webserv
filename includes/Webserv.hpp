@@ -64,6 +64,6 @@ struct Response
 
 struct Ret handleRequest(std::string buff, std::vector<ServerData> &data);
 
-    void outputLogs(std::string logs);
+void outputLogs(std::string logs);
 
 #endif  // !WEBSERV_HPP

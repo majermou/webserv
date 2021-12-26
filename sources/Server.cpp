@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 13:24:54 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/22 18:53:36 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/23 19:11:09 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,7 +66,7 @@ void Server::run(void)
 	int tmp;
 	char buf[_bufSize];
 	std::string response;
-	struct Ret r;
+	struct Ret hr;
 	std::string str = "\r\n\r\n";
 
 	response =
@@ -99,21 +99,29 @@ void Server::run(void)
 				while ((tmp = recv(readyFds[i], buf, _bufSize - 1, 0)) > 0)
 				{
 					_rawRequest[readyFds[i]] += buf;
-				}
-				if (tmp < 0)
+				}majermou
+				if (tmp < 0 && errno != EAGAIN)
 				{
-					// error
-					// exit
+					outputLogs("server error recv: " +
+					           std::string(strerror(errno)));
 				}
-				if (checkCrlf(_rawRequest[readyFds[i]], readyFds[i]) == true)
+				if (checkCrlf(_rawRequest[readyFds[i]], readyFds[i]) == true ||
+				    tmp == 0)
 				{
-					response = (handleRequest(_rawRequest[readyFds[i]],
-					                          _mypoll.getData()))
-					               .response;
-					send(readyFds[i], response.c_str(), response.length(), 0);
-					_rawRequest.erase(readyFds[i]);
-					_mypoll.clearActiveFd(readyFds[i]);
-					close(readyFds[i]);
+					if (tmp != 0)
+					{
+						hr       = handleRequest(_rawRequest[readyFds[i]],
+						                         _mypoll.getData());
+						response = hr.response;
+						send(readyFds[i], response.c_str(), response.length(),
+						     0);
+					}
+					if (tmp == 0 || hr.connection == false)
+					{
+						_rawRequest.erase(readyFds[i]);
+						_mypoll.clearActiveFd(readyFds[i]);
+						close(readyFds[i]);
+					}
 				}
 				i++;
 			}

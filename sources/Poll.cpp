@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/11 15:48:46 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/22 19:13:08 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/23 19:11:11 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,8 +85,7 @@ Poll::Poll(std::vector<ServerData> data)
 		if (bind(tmpMasterSocket, (struct sockaddr *)&server, sizeof(server)) <
 		    0)
 		{
-			outputLogs(std::string("server bind: ") +
-			           std::string(strerror(errno)));
+			outputLogs("server error bind: " + std::string(strerror(errno)));
 			std::cout << strerror(errno) << std::endl;
 			// error bind failed
 		}
@@ -108,6 +107,7 @@ Poll::Poll(std::vector<ServerData> data)
 		}
 		else
 		{
+			outputLogs("server error listen: " + std::string(strerror(errno)));
 			std::cout << strerror(errno) << std::endl;
 			// error listen failed
 			// exit
@@ -148,9 +148,8 @@ std::vector<int> Poll::getReadyfds(void)
 			                     ((struct sockaddr *)&_sockAddrVal[i]), &len);
 			if (slavesocket < 0)
 			{
-				// outputLogs("getReadyfds error accept failed");
-				//  error accept
-				//  exit
+				outputLogs("server error accept: " +
+				           std::string(strerror(errno)));
 			}
 			else if (slavesocket > 0)
 			{
