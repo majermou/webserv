@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 11:34:23 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/20 18:53:50 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/27 16:17:28 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,11 +29,11 @@ public:
 
 private:
 	Server(void);
-	Poll _mypool;
+	Poll _mypoll;
 	// int _masterSocket;
 	// struct addrinfo *_addrinfoVal;
 	const int _bufSize;
-	//std::string _rawRequest;
+	// std::string _rawRequest;
 	std::map<int, std::string> _rawRequest;
 };
 
