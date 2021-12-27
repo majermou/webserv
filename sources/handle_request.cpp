@@ -110,6 +110,7 @@ struct Ret  handle_POST_Request(Request &request, std::vector<ServerData> &serve
 	std::string				content_type;
 	std::vector<filenames>	files;
 	std::ofstream			ofs;
+	std::string				payload;
 
 
     if (data.locations[data.location_num].getAllowedMethods().find("POST")->second == false ||
@@ -123,8 +124,6 @@ struct Ret  handle_POST_Request(Request &request, std::vector<ServerData> &serve
 		boundary = getToken(request.request_headers.find("Content-Type")->second, "boundary=");
 		boundary = getToken(request.request_headers.find("Content-Type")->second, "boundary=");
 		files = parsePost(request.body, boundary);
-
-		std::cout << files.size();
 		for (int i = 0; i < files.size(); i++) {
 			files[i].path = uploadLocation + files[i].path;
 			checkvalid(files[i].path);
@@ -132,12 +131,34 @@ struct Ret  handle_POST_Request(Request &request, std::vector<ServerData> &serve
 			ofs.open(files[i].path);
 			if (ofs.is_open()) {
 				ofs << files[i].data;
+				ofs.close();
 			} else
 				return HandleErrors("500 Internal Server Error", server_data, data.server_num);
 		}
-	}
-
+	} else if (content_type ==  "application/x-www-form-urlencoded" || content_type == "text/plain")
+		payload = request.body;
+	else
 		return HandleErrors("415 Unsupported Media Type", server_data, data.server_num);
+	response.body += "<html>";
+    response.body += CRLF;
+    response.body += "	<body>";
+    response.body += CRLF;
+    response.body += "		<h1>";
+    response.body += " Successfull Upload</h1>";
+    response.body += CRLF;
+    response.body += "	</body>";
+    response.body += CRLF;
+    response.body += "</html>";
+    response.status_line = HTTPv1;
+	response.status_line += " 200 KO";
+    response.response_headers["Content-Type"] = "text/html; charset=UTF-8";
+    response.response_headers["Content-Length"] = std::to_string(response.body.length()); ///// c++11
+    if (request.request_headers.count("Connection") == 0 ||
+		request.request_headers.find("Connection")->second == "keep-alive") {
+		response.response_headers["Connection"] = "keep-alive";
+	} else 
+	    response.response_headers["Connection"] = "closed";
+	return generateResponse(response);
 }
 
 struct Ret	handle_DELETE_Request(Request &request, std::vector<ServerData> &server_data, RqLineData &data)
