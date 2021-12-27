@@ -18,3 +18,9 @@
 [2021-12-27 16:32:51]: configuration webserv.example.conf file has been parsed successfully
 [2021-12-27 16:36:36]: configuration webserv.example.conf file has been parsed successfully
 [2021-12-27 16:36:51]: configuration webserv.example.conf file has been parsed successfully
+[2021-12-27 17:11:19]: main error: Could not open configuration file
+[2021-12-27 17:11:22]: configuration webserv.example.conf file has been parsed successfully
+[2021-12-27 17:20:34]: configuration webserv.example.conf file has been parsed successfully
+[2021-12-27 17:21:03]: configuration webserv.example.conf file has been parsed successfully
+[2021-12-27 17:40:40]: configuration webserv.example.conf file has been parsed successfully
+[2021-12-27 18:15:50]: configuration webserv.example.conf file has been parsed successfully

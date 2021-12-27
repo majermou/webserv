@@ -127,7 +127,6 @@ struct Ret  handle_POST_Request(Request &request, std::vector<ServerData> &serve
 		for (int i = 0; i < files.size(); i++) {
 			files[i].path = uploadLocation + files[i].path;
 			checkvalid(files[i].path);
-			std::cout << files[i].path;
 			ofs.open(files[i].path);
 			if (ofs.is_open()) {
 				ofs << files[i].data;
@@ -151,6 +150,9 @@ struct Ret  handle_POST_Request(Request &request, std::vector<ServerData> &serve
     response.body += "</html>";
     response.status_line = HTTPv1;
 	response.status_line += " 200 KO";
+	if (request.request_headers.count("Cookie") == 1) {
+		response.response_headers["Cookie"] = request.request_headers.find("Cookie")->second;
+	}
     response.response_headers["Content-Type"] = "text/html; charset=UTF-8";
     response.response_headers["Content-Length"] = std::to_string(response.body.length()); ///// c++11
     if (request.request_headers.count("Connection") == 0 ||
@@ -299,6 +301,9 @@ struct Ret handle_GET_Request(Request &request, std::vector<ServerData> &server_
 	}
 	response.status_line += HTTPv1;
 	response.status_line += return_code;
+	if (request.request_headers.count("Cookie") == 1) {
+		response.response_headers["Cookie"] = request.request_headers.find("Cookie")->second;
+	}
 	if (response.response_headers.count("Content-Type") != 1)
 		response.response_headers["Content-Type"] = contentType(data.path);
 	response.response_headers["Content-Length"] = std::to_string(response.body.length()); // c++11
