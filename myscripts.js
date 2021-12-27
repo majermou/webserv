@@ -1,1 +1,2 @@
-alert("Hello This is Awesome Webserver!!!!!!!!");
+let emoji = "🚀"
+alert("Hello This is an Awesome Webserver " + emoji)

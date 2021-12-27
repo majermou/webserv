@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/11 15:48:46 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/23 19:11:11 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/20 18:53:56 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ std::vector<int> getAllPorts(const std::vector<ServerData> &data)
  */
 
 Poll::Poll(std::vector<ServerData> data)
-    : _queue(30), _sockAddrVal(), _data(data)
+    : _queue(10), _sockAddrVal(), _data(data)
 {
 	int tmpMasterSocket;
 	int optval;

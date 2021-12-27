@@ -48,6 +48,7 @@ struct Ret
 	std::string response;
 	bool connection;
 };
+
 struct Request
 {
 	std::string request_line;

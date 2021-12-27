@@ -13,134 +13,184 @@
 #define CRLF             	"\r\n"
 #define CRLFCRLF         	"\r\n\r\n"
 #define HeaderPairsDelim 	": "
-#define HTTP_VERSION     	"HTTP/1.1"
+#define HTTPv1				"HTTP/1.1"
+#define HTTPv2				"HTTP/2"
+
+
+int	examineLocations(std::vector<Location> locations, std::string path);
+int	examineServers(Request &req, std::vector<ServerData> &data);
+void checkvalid(std::string &path);
+std::string getToken(std::string &str, std::string delimiter);
+struct Ret generateResponse(struct Response resp);
+std::string	contentType(std::string path);
+
+struct RqLineData {
+	std::string path;
+	int server_num;
+	int location_num;
+	std::vector<Location> locations;
+};
+
+struct filenames {
+	std::string	data;
+	std::string	path;
+};
+
+std::vector<filenames>	parsePost(std::string body, std::string boundary);
 
 
 
 
-std::string getToken(std::string &str, std::string delimiter)
+struct Ret HandleErrors(std::string errorType, std::vector<ServerData> &server_data, int server_num)
 {
-	size_t pos        = str.find(delimiter);
-	std::string token = str.substr(0, pos);
-	str.erase(0, pos + delimiter.length());
-	return token;
-}
+	Response					response;
+	std::string					ln;
+	std::map<int, std::string>	error_pages;
+	int							contentLenght = 0;
+	std::string					error_page_path;
+	std::ifstream				ifs;
+	std::string					str;
 
-struct Ret generateResponse(struct Response resp)
-{
-	Ret ret;
-	char buff[1000];
-
-	ret.response += resp.status_line;
-	ret.response += CRLF;
-	for (std::map<std::string, std::string>::iterator it =
-	         resp.response_headers.begin();
-	     it != resp.response_headers.end(); it++)
-	{
-		ret.response += it->first;
-		ret.response += ": ";
-		ret.response += it->second;
-		ret.response += CRLF;
+	response.status_line += HTTPv1;
+	response.status_line += SP;
+	response.status_line += errorType;
+	response.response_headers["Connection"] = "close";
+	response.response_headers["Content-type"] = "text/html; charset=UTF-8";
+	if (server_num >= 0 && server_data[server_num].getErrorPageMap().count(atoi(errorType.c_str())) == 1) {
+		error_page_path = server_data[server_num].getErrorPageMap().find(atoi(errorType.c_str()))->second;
+		error_page_path = server_data[server_num].getRootDir() + error_page_path;
+		checkvalid(error_page_path);
+		ifs.open(error_page_path);
+		if (ifs.is_open()) {
+			while (getline(ifs, str)) {
+				response.body += str;
+				response.body += CRLF;
+			}
+		} else {
+			errorType = "500 Internal Server Error";
+			goto label;
+		}
+	} else {
+		label:
+		response.body += "<html>";
+		response.body += CRLF;
+		response.body += "<head>";
+		response.body += CRLF;
+		response.body += "<title>";
+		response.body += errorType;
+		response.body += "</title>";
+		response.body += CRLF;
+		response.body += "</head>";
+		response.body += CRLF;
+		response.body += "<body>";
+		response.body += CRLF;
+		response.body += "<h1>";
+		response.body += errorType;
+		response.body += "</h1>";
+		response.body += CRLF;
+		response.body += "<h4>";
+		response.body += "WebServ/v0.1";
+		response.body += "</h4>";
+		response.body += CRLF;
+		response.body += "</body>";
+		response.body += CRLF;
+		response.body += "</html>";
+		response.body += CRLFCRLF;
 	}
-	ret.response += "Server: WebServ/v0.1";
-	ret.response += CRLF;
-	time_t now   = time(0);
-	struct tm tm = *gmtime(&now);
-	strftime(buff, sizeof buff, "%a, %d %b %Y %H:%M:%S %Z", &tm);
-	ret.response += "Date: " + std::string(buff);
-	ret.response += CRLFCRLF;
-	ret.response += resp.body;
-	ret.response += CRLFCRLF;
-	if (resp.response_headers.find("Connection")->second == "keep-alive")
-		ret.connection = true;
-	else
-		ret.connection = false;
-	return ret;
+	response.response_headers["Content-Length"] = std::to_string(response.body.length()); // c++11
+	return generateResponse(response);
 }
 
-struct Ret HandleErrors(std::string errorType)
+struct Ret  handle_POST_Request(Request &request, std::vector<ServerData> &server_data, RqLineData &data)
 {
-	Response	resp;
-	std::string ln;
+    std::string				return_code = "200 OK";
+    Response				response;
+    std::string				uploadLocation;
+    std::string				boundary;
+	std::string				content_type;
+	std::vector<filenames>	files;
+	std::ofstream			ofs;
 
-	resp.status_line += HTTP_VERSION;
-	resp.status_line += SP;
-	resp.status_line += errorType;
-	resp.response_headers["Connection"] = "close";
-	resp.response_headers["Content-type"] = "text/html; charset=UTF-8";
-	int contentLenght = 0;
-	std::ifstream ifs("/Users/majermou/webserv/404.html");
-	while (ifs) {
-		getline(ifs, ln);
-		resp.body += ln;
-		resp.body += CRLF;
-		contentLenght += ln.length();
-	}
-	resp.response_headers.insert(
-	    std::make_pair("Content-Length", std::to_string(contentLenght))); // c++98
-	return generateResponse(resp);
-}
 
-void checkvalid(std::string &path)
-{
-	for (size_t i = 0; i < path.length() - 1; i++)
-	{
-		if (path[i] == path[i + 1] && path[i] == '/')
-		{
-			path.erase(i, 1);
+    if (data.locations[data.location_num].getAllowedMethods().find("POST")->second == false ||
+		data.locations[data.location_num].getUploadEnabled() == false)
+    	return HandleErrors("405 Not Allowed", server_data, data.server_num);
+	uploadLocation = data.locations[data.location_num].getUploadLocation();
+	uploadLocation = server_data[data.server_num].getRootDir() + uploadLocation;
+	uploadLocation += "/";
+	content_type = getToken(request.request_headers.find("Content-Type")->second, ";");
+    if (content_type ==  "multipart/form-data") {
+		boundary = getToken(request.request_headers.find("Content-Type")->second, "boundary=");
+		boundary = getToken(request.request_headers.find("Content-Type")->second, "boundary=");
+		files = parsePost(request.body, boundary);
+
+		std::cout << files.size();
+		for (int i = 0; i < files.size(); i++) {
+			files[i].path = uploadLocation + files[i].path;
+			checkvalid(files[i].path);
+			std::cout << files[i].path;
+			ofs.open(files[i].path);
+			if (ofs.is_open()) {
+				ofs << files[i].data;
+			} else
+				return HandleErrors("500 Internal Server Error", server_data, data.server_num);
 		}
 	}
+
+		return HandleErrors("415 Unsupported Media Type", server_data, data.server_num);
 }
 
-int	examineLocations(std::vector<Location> locations, std::string path)
+struct Ret	handle_DELETE_Request(Request &request, std::vector<ServerData> &server_data, RqLineData &data)
 {
-	int		LocationNum  = 0;
-	size_t	priority = 0;
+    Response		response;
+    struct stat		buffer;
 
-	for (size_t i = 0; i < locations.size(); i++)
-	{
-		if (path.find(locations[i].getPath()) != std::string::npos &&
-		    locations[i].getPath().length() > priority)
-			LocationNum = i;
+    if (data.locations[data.location_num].isRedirection() == true
+        || data.locations[data.location_num].getAllowedMethods().find("DELETE")->second == false) {
+    	return HandleErrors("405 Not Allowed", server_data, data.server_num);
+    }
+    if (data.locations[data.location_num].getRootDir().empty()) {
+		data.path = server_data[data.server_num].getRootDir() + data.path;
+	} else {
+		data.path = data.locations[data.location_num].getRootDir() + data.path;
 	}
-	return LocationNum;
+    checkvalid(data.path);
+    if (stat(data.path.c_str(), &buffer) == 0) {
+        if (buffer.st_mode & S_IFDIR)
+            return HandleErrors("405 Not Allowed", server_data, data.server_num);
+        if (remove(data.path.c_str()) != 0)
+            return HandleErrors("403 Forbidden", server_data, data.server_num);
+    } else {
+        return HandleErrors("404 Not Found", server_data, data.server_num);
+    }
+    response.body += "<html>";
+    response.body += CRLF;
+    response.body += "	<body>";
+    response.body += CRLF;
+    response.body += "		<h1>";
+    response.body += data.path;
+    response.body += " was deleted.</h1>";
+    response.body += CRLF;
+    response.body += "	</body>";
+    response.body += CRLF;
+    response.body += "</html>";
+    response.status_line = HTTPv1;
+	response.status_line += " 200 KO";
+    response.response_headers["Content-Type"] = "text/html; charset=UTF-8";
+    response.response_headers["Content-Length"] = std::to_string(response.body.length()); ///// c++11
+    if (request.request_headers.count("Connection") == 0 ||
+		request.request_headers.find("Connection")->second == "keep-alive") {
+		response.response_headers["Connection"] = "keep-alive";
+	} else 
+	    response.response_headers["Connection"] = "closed";
+    return generateResponse(response);
 }
 
-int	examineServers(Request &req, std::vector<ServerData> &data) {
-	for (int i = data.size() - 1; i > 0; i--) {
-		if (std::find(data[i].getNames().begin(), data[i].getNames().end(),
-			req.request_headers.find("Host")->second) != data[i].getNames().end())
-			return i;
-	}
-	return data.size() - 1;
-}
-
-std::string	contentType(std::string path) {
-	std::string extention;
-
-	getToken(path, ".");
-	extention = getToken(path, ".");
-	if (extention == "html")
-		return "text/html; charset=UTF-8";
-	else if (extention == "css")
-		return "text/css";
-	else if (extention == "js")
-		return "text/javascript";
-	else if (extention == "gif")
-		return "image/gif";
-	else if (extention == "webp")
-		return "image/webp";
-	else if (extention == "jpeg" || extention == "jpg")
-		return "image/jpeg";
-	else if (extention == "png")
-		return "image/png";
-	return "text/plain";
-}
-
-std::string	HandleAutoIndexing(std::string path, std::string uri) {
+std::string	HandleAutoIndexing(std::string path, std::string uri)
+{
 	struct dirent	*entry;
 	std::string		link;
-	std::string ret = "<html><head><title>Indexing</title></head><body>\r\n";
+	std::string		ret = "<html><head><title>Indexing</title></head><body>\r\n";
 	ret += "<h1>Index of ";
 	ret += path;
 	ret += "</h1><hr>\r\n";
@@ -160,121 +210,122 @@ std::string	HandleAutoIndexing(std::string path, std::string uri) {
 	return ret;
 }
 
-struct Ret handle_GET_Request(Request &req, std::vector<ServerData> &data)
+struct Ret handle_GET_Request(Request &request, std::vector<ServerData> &server_data, RqLineData &data)
 {
-	std::string return_code = "200 OK";
-	std::string http_version;
-	std::string path;
-	std::string uri;
-	int i, j;
-	struct stat buffer;
-	std::ostringstream stream;
-	Response resp;
-	std::ifstream file;
-	std::string ln;
+	Response			response;
+	std::string			uri = data.path;
+	std::string			return_code = " 200 OK";
+	struct stat			buffer;
+	std::ostringstream	stream;
+	std::ifstream		file;
+	std::string			ln;
+	char				buff;
 
-	if (req.request_headers.count("Host") != 1) {
-		return HandleErrors("400 Bad Request");
+	if (data.locations[data.location_num].isRedirection() == true) {
+		return_code += " ";
+		return_code += std::to_string(data.locations[data.location_num].getReturnCode()); // c++11
+		return_code += " Moved Permanently";
+		data.path = data.locations[data.location_num].getReturnUrl();
+		data.location_num = examineLocations(data.locations, data.path);
+		response.response_headers["Location"] = data.path;
+	}
+	if (data.locations[data.location_num].getAllowedMethods().find("GET")->second == false)
+		return HandleErrors("405 Not Allowed", server_data, data.server_num);
+	if (data.locations[data.location_num].getRootDir().empty()) {
+		data.path = server_data[data.server_num].getRootDir() + data.path;
 	} else {
-		i = examineServers(req, data);
-		std::vector<Location> locations = data[i].getLocations();
-		uri = getToken(req.request_line, SP);
-		path = uri;
-		j = examineLocations(locations, path);
-		if (locations[j].isRedirection() == true) {
-			stream << locations[j].getReturnCode();
-			return_code = stream.str() + " Moved Permanently";
-			path = locations[j].getReturnUrl();
-			j = examineLocations(locations, path);
-			resp.response_headers["Location"] = path;
-		}
-
-		// CGI //
-
-		if (locations[j].getAllowedMethods().find("GET")->second == false)
-			return HandleErrors("405 Method Not Allowed");
-		if (locations[j].getRootDir().empty()) {
-			path = data[i].getRootDir() + path;
-		} else {
-			path = locations[j].getRootDir() + path;
-		}
-		checkvalid(path);
-		if (stat(path.c_str(), &buffer) == 0) {
-			if (access(path.c_str(), F_OK) != 0)
-				return HandleErrors("403 Forbidden");
-			if (buffer.st_mode & S_IFDIR) {
-				if (locations[j].getAutoIndex() == true) {
-					resp.body = HandleAutoIndexing(path, uri);
-					if (resp.body.empty() == true)
-						return HandleErrors("500 Internal Server Error");
-					resp.response_headers["Content-Type"] = "text/html; charset=UTF-8";
-				} else {
-					if (locations[j].getDefaultFile().empty() == true)
-						return HandleErrors("403 Forbidden");
-					path += locations[j].getDefaultFile();
-				}
+		data.path = data.locations[data.location_num].getRootDir() + data.path;
+	}
+	checkvalid(data.path);
+	if (stat(data.path.c_str(), &buffer) == 0) {
+		if (access(data.path.c_str(), F_OK) != 0)
+			return HandleErrors("403 Forbidden", server_data, data.server_num);
+		if (buffer.st_mode & S_IFDIR) {
+			if (data.locations[data.location_num].getAutoIndex() == true) {
+				response.body = HandleAutoIndexing(data.path, uri);
+				if (response.body.empty() == true)
+					return HandleErrors("500 Internal Server Error", server_data, data.server_num);
+				response.response_headers["Content-Type"] = "text/html; charset=UTF-8";
+			} else {
+				if (data.locations[data.location_num].getDefaultFile().empty() == true)
+					return HandleErrors("403 Forbidden", server_data, data.server_num);
+				data.path += data.locations[data.location_num].getDefaultFile();
 			}
 		}
-		else
-			return HandleErrors("404 Not Found");
-		http_version = req.request_line;
-		if (http_version != HTTP_VERSION) {
-			if (http_version == "HTTP/2")
-				return HandleErrors("505 HTTP Version Not Supported");
-			return HandleErrors("400 Bad Request");
-		}
-		if (resp.body.empty() == true) {
-			if (contentType(path) == "image/jpeg") {
-				file.open(path, std::ios::binary);
-				char buff;
-				if (file.is_open()) {
-					while (!file.eof()) {
-						file >> std::noskipws >> buff;
-						resp.body += buff;
-					}
-					file.close();
-				}
-			} else {
-				file.open(path);
-				for (std::string str; getline(file, str); ) {
-					resp.body += str;
-					resp.body += CRLF;
+	}
+	else
+		return HandleErrors("404 Not Found", server_data, data.server_num);
+	if (response.body.empty() == true) {
+		if (contentType(data.path) == "image/jpeg" || contentType(data.path) == "image/gif" || 
+			contentType(data.path) == "image/png" ) {
+			file.open(data.path, std::ios::binary);
+			if (file.is_open()) {
+				while (!file.eof()) {
+					file >> std::noskipws >> buff;
+					response.body += buff;
 				}
 				file.close();
+			} else
+				return HandleErrors("500 Internal Server Error", server_data, data.server_num);
+		} else {
+			file.open(data.path);
+			for (std::string str; getline(file, str); ) {
+				response.body += str;
+				response.body += CRLF;
 			}
+			file.close();
 		}
-		resp.status_line = http_version + " " + return_code;
-		if (resp.response_headers.count("Content-Type") != 1)
-			resp.response_headers["Content-Type"] = contentType(path);
-		resp.response_headers["Content-Length"] = std::to_string(resp.body.length());
-		if (req.request_headers.count("Connection") == 0 ||
-		    req.request_headers.find("Connection")->second == "keep-alive") {
-			resp.response_headers["Connection"] = "keep-alive";
-		} else 
-			resp.response_headers["Connection"] = "closed";
 	}
-	return generateResponse(resp);
+	response.status_line += HTTPv1;
+	response.status_line += return_code;
+	if (response.response_headers.count("Content-Type") != 1)
+		response.response_headers["Content-Type"] = contentType(data.path);
+	response.response_headers["Content-Length"] = std::to_string(response.body.length()); // c++11
+	if (request.request_headers.count("Connection") == 0 ||
+		request.request_headers.find("Connection")->second == "keep-alive") {
+		response.response_headers["Connection"] = "keep-alive";
+	} else 
+		response.response_headers["Connection"] = "closed";
+	return generateResponse(response);
 }
 
-struct Ret handleRequest(std::string buff, std::vector<ServerData> &data)
+struct Ret handleRequest(std::string buff, std::vector<ServerData> &server_data)
 {
-	Request request;
-	std::string token;
+	Request					request;
+	std::string				HeaderToken;
+	std::string 			method;
+	std::string				http_version;
+	RqLineData				req_line_data;
 
 	request.request_line = getToken(buff, CRLF);
-	while ((token = getToken(buff, CRLF)) != "") {
-		request.request_headers.insert(std::make_pair(getToken(token, HeaderPairsDelim),
-		                			   getToken(token, HeaderPairsDelim)));
+	while ((HeaderToken = getToken(buff, CRLF)) != "") {
+		request.request_headers.insert(std::make_pair(getToken(HeaderToken, HeaderPairsDelim),
+								getToken(HeaderToken, HeaderPairsDelim)));
 	}
-	request.body = getToken(buff, CRLFCRLF);
-	std::string method = getToken(request.request_line, SP);
+	request.body = buff;
+	method = getToken(request.request_line, SP);
+	req_line_data.path = getToken(request.request_line, SP);
+	http_version = request.request_line;
+	if (request.request_headers.count("Host") != 1) {
+		return HandleErrors("400 Bad Request", server_data, -1);
+	}
+	req_line_data.server_num = examineServers(request, server_data);
+	req_line_data.locations = server_data[req_line_data.server_num].getLocations();
+	req_line_data.location_num = examineLocations(req_line_data.locations, req_line_data.path);
+	if (http_version != HTTPv1) {
+		if (http_version == HTTPv2)
+			return HandleErrors("505 HTTP Version Not Supported", server_data, req_line_data.server_num);
+		return HandleErrors("400 Bad Request", server_data, req_line_data.server_num);
+	}
+	// if (locations[location_num].isCGI() == true)		/// CGI ///
+	//	return HandleCGI();
 	if (method == "GET")
-		return handle_GET_Request(request, data);
-	// else if (method == "DELETE")
-	//     return handle_DELETE_Request(request);
-	// else if (method == "POST")
-	//     return handle_POST_Request(rq);
+		return handle_GET_Request(request, server_data, req_line_data);
+	else if (method == "DELETE")
+	    return handle_DELETE_Request(request, server_data, req_line_data);
+	else if (method == "POST")
+	    return handle_POST_Request(request, server_data, req_line_data);
 	else if (method == "OPTIONS" || method == "HEAD" || method == "PUT" || method == "PATCH")
-		HandleErrors("501 Not Implemented");
-	return HandleErrors("400 Bad Request");
+		return HandleErrors("501 Not Implemented", server_data, req_line_data.server_num);
+	return HandleErrors("400 Bad Request", server_data, req_line_data.server_num);
 }
