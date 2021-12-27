@@ -96,20 +96,15 @@ void Server::run(void)
 				/**************************************************************/
 
 				bzero(buf, _bufSize);
-					// std::cout << "==================================START===================================\n";
 				while ((tmp = recv(readyFds[i], buf, _bufSize - 1, 0)) > 0)
 				{
 					_rawRequest[readyFds[i]] += buf;
-					std::cout << buf;
 				}
 				if (tmp < 0)
 				{
 					// error
 					// exit
 				}
-			
-				//std::cout << _rawRequest[readyFds[i]] << "\n";
-				// std::cout << "==================================END===================================\n";
 				if (checkCrlf(_rawRequest[readyFds[i]], readyFds[i]) == true)
 				{
 					response = (handleRequest(_rawRequest[readyFds[i]],
