@@ -7,3 +7,14 @@
 [2021-12-27 15:40:51]: configuration webserv.example.conf file has been parsed successfully
 [2021-12-27 16:17:59]: main error: Could not open configuration file
 [2021-12-27 16:18:01]: configuration webserv.example.conf file has been parsed successfully
+[2021-12-27 16:24:41]: configuration webserv.example.conf file has been parsed successfully
+[2021-12-27 16:26:04]: configuration webserv.example.conf file has been parsed successfully
+[2021-12-27 16:27:21]: configuration webserv.example.conf file has been parsed successfully
+[2021-12-27 16:27:59]: configuration webserv.example.conf file has been parsed successfully
+[2021-12-27 16:31:40]: configuration webserv.example.conf file has been parsed successfully
+[2021-12-27 16:31:40]: server error bind: Address already in use
+[2021-12-27 16:31:40]: server error bind: Address already in use
+[2021-12-27 16:31:40]: server error bind: Address already in use
+[2021-12-27 16:32:51]: configuration webserv.example.conf file has been parsed successfully
+[2021-12-27 16:36:36]: configuration webserv.example.conf file has been parsed successfully
+[2021-12-27 16:36:51]: configuration webserv.example.conf file has been parsed successfully
