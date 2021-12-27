@@ -66,7 +66,7 @@ void Server::run(void)
 	int tmp;
 	char buf[_bufSize];
 	std::string response;
-	struct Ret r;
+	struct Ret hr;
 	std::string str = "\r\n\r\n";
 
 	response =
@@ -100,13 +100,28 @@ void Server::run(void)
 				{
 					_rawRequest[readyFds[i]] += buf;
 				}
-				if (tmp < 0)
+				if (tmp < 0 && errno != EAGAIN)
 				{
-					// error
-					// exit
+					outputLogs("server error recv: " +
+					           std::string(strerror(errno)));
 				}
-				if (checkCrlf(_rawRequest[readyFds[i]], readyFds[i]) == true)
+				if (checkCrlf(_rawRequest[readyFds[i]], readyFds[i]) == true ||
+				    tmp == 0)
 				{
+					if (tmp != 0)
+					{
+						hr       = handleRequest(_rawRequest[readyFds[i]],
+						                         _mypoll.getData());
+						response = hr.response;
+						send(readyFds[i], response.c_str(), response.length(),
+						     0);
+					}
+					if (tmp == 0 || hr.connection == false)
+					{
+						_rawRequest.erase(readyFds[i]);
+						_mypoll.clearActiveFd(readyFds[i]);
+						close(readyFds[i]);
+					}
 					response = (handleRequest(_rawRequest[readyFds[i]],
 					                          _mypool.getData()))
 					               .response;
