@@ -48,6 +48,7 @@ struct Ret
 	std::string response;
 	bool connection;
 };
+
 struct Request
 {
 	std::string request_line;
@@ -64,6 +65,6 @@ struct Response
 
 struct Ret handleRequest(std::string buff, std::vector<ServerData> &data);
 
-    void outputLogs(std::string logs);
+void outputLogs(std::string logs);
 
 #endif  // !WEBSERV_HPP
