@@ -109,7 +109,17 @@ struct Ret generateResponse(struct Response resp)
 	struct tm tm = *gmtime(&now);
 	strftime(buff, sizeof buff, "%a, %d %b %Y %H:%M:%S %Z", &tm);
 	ret.response += "Date: " + std::string(buff);
-	ret.response += CRLFCRLF;
+	ret.response += CRLF;
+	if (resp.response_headers.count("Cookie") == 1) {
+		std::string	cookie = resp.response_headers.find("Cookie")->second;
+		std::string	str;
+		while ((str = getToken(cookie, ";")) != "") {
+			ret.response = "Set-Cookie: ";
+			ret.response += str;
+			ret.response += CRLF;
+		}
+	}
+	ret.response += CRLF;
 	ret.response += resp.body;
 	ret.response += CRLFCRLF;
 	if (resp.response_headers.find("Connection")->second == "keep-alive")
@@ -141,7 +151,6 @@ std::vector<filenames>	parsePost(std::string body, std::string boundary)
 		vect.push_back(filename);
 	}
 	str = body;
-	std::cout << str;
 	filename.path = getToken(str, "filename=\"");
 	filename.path = getToken(str, "\"");
 	filename.data = getToken(str, CRLFCRLF);
