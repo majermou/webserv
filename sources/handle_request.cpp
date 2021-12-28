@@ -323,10 +323,6 @@ struct Ret handleRequest(std::string buff, std::vector<ServerData> &server_data,
 	RqLineData				req_line_data;
 	Ret						ret;
 
-	std::cout << "==========================================BEG=" << std::endl;
-	std::cout << buff;
-	std::cout << "========================================EDN=" << std::endl;
-
 	request.request_line = getToken(buff, CRLF);
 	method = getToken(request.request_line, SP);
 	ret.safi = false;

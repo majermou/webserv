@@ -142,7 +142,6 @@ std::vector<filenames>	parsePost(std::string body, std::string boundary)
 
 	body = getToken(body, last_boundary);
 	getToken(body, two_dashes + boundary);
-	std::cout << body;
 	while (body.find(in_boundary) != std::string::npos) {
 		str = body.substr(0, body.find(in_boundary));
 		body.erase(0, body.find(in_boundary));
