@@ -89,11 +89,27 @@ std::string	contentType(std::string path) {
 
 struct Ret generateResponse(struct Response resp)
 {
-	Ret ret;
-	char buff[1000];
+	Ret				ret;
+	char			buff[1000];
+	std::string		cookie, str;
+
 
 	ret.response += resp.status_line;
 	ret.response += CRLF;
+	if (resp.response_headers.count("Cookie") == 1) {
+		cookie = resp.response_headers.find("Cookie")->second;
+		resp.response_headers.erase("Cookie");
+		while (cookie.find("; ") != std::string::npos) {
+			str = getToken(cookie, "; ");
+			ret.response += "Set-Cookie: ";
+			ret.response += str;
+			ret.response += CRLF;
+		}
+		std::cout << "\n" << cookie << "\n";
+		ret.response += "Set-Cookie: ";
+		ret.response += cookie;
+		ret.response += CRLF;
+	}
 	for (std::map<std::string, std::string>::iterator it =
 	         resp.response_headers.begin();
 	     it != resp.response_headers.end(); it++)
@@ -110,15 +126,6 @@ struct Ret generateResponse(struct Response resp)
 	strftime(buff, sizeof buff, "%a, %d %b %Y %H:%M:%S %Z", &tm);
 	ret.response += "Date: " + std::string(buff);
 	ret.response += CRLF;
-	if (resp.response_headers.count("Cookie") == 1) {
-		std::string	cookie = resp.response_headers.find("Cookie")->second;
-		std::string	str;
-		while ((str = getToken(cookie, ";")) != "") {
-			ret.response = "Set-Cookie: ";
-			ret.response += str;
-			ret.response += CRLF;
-		}
-	}
 	ret.response += CRLF;
 	ret.response += resp.body;
 	ret.response += CRLFCRLF;

@@ -302,6 +302,7 @@ struct Ret handle_GET_Request(Request &request, std::vector<ServerData> &server_
 	response.status_line += return_code;
 	if (request.request_headers.count("Cookie") == 1) {
 		response.response_headers["Cookie"] = request.request_headers.find("Cookie")->second;
+		
 	}
 	if (response.response_headers.count("Content-Type") != 1)
 		response.response_headers["Content-Type"] = contentType(data.path);
