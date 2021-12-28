@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 13:24:54 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/27 16:17:52 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/28 10:49:23 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,13 +122,6 @@ void Server::run(void)
 						_mypoll.clearActiveFd(readyFds[i]);
 						close(readyFds[i]);
 					}
-					response = (handleRequest(_rawRequest[readyFds[i]],
-					                          _mypoll.getData()))
-					               .response;
-					send(readyFds[i], response.c_str(), response.length(), 0);
-					_rawRequest.erase(readyFds[i]);
-					_mypoll.clearActiveFd(readyFds[i]);
-					close(readyFds[i]);
 				}
 				i++;
 			}
