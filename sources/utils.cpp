@@ -133,14 +133,15 @@ struct Ret generateResponse(struct Response resp)
 std::vector<filenames>	parsePost(std::string body, std::string boundary)
 {
 	std::string					two_dashes = "--";
-	std::string					last_boundary = two_dashes + boundary + two_dashes;
-	std::string					in_boundary = two_dashes + boundary;
+	std::string					str0("\r\n");
+	std::string					last_boundary = str0 + two_dashes + boundary + two_dashes;
+	std::string					in_boundary = str0 + two_dashes + boundary;
 	filenames					filename;
 	std::vector<filenames>		vect;
 	std::string					str;
 
 	body = getToken(body, last_boundary);
-	getToken(body, in_boundary);
+	getToken(body, two_dashes + boundary);
 	while (body.find(in_boundary) != std::string::npos) {
 		str = body.substr(0, body.find(in_boundary));
 		body.erase(0, body.find(in_boundary));
@@ -148,14 +149,13 @@ std::vector<filenames>	parsePost(std::string body, std::string boundary)
 		filename.path = getToken(str, "filename=\"");
 		filename.path = getToken(str, "\"");
 		filename.data = getToken(str, CRLFCRLF);
-		filename.data = getToken(str, CRLFCRLF);
+		filename.data = str;
 		vect.push_back(filename);
 	}
-	str = body;
-	filename.path = getToken(str, "filename=\"");
-	filename.path = getToken(str, "\"");
-	filename.data = getToken(str, CRLFCRLF);
-	filename.data = str;
+	filename.path = getToken(body, "filename=\"");
+	filename.path = getToken(body, "\"");
+	filename.data = getToken(body, CRLFCRLF);
+	filename.data = body;
 	vect.push_back(filename);
 	return vect;
 }
