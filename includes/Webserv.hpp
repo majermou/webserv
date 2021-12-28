@@ -47,6 +47,7 @@ struct Ret
 {
 	std::string response;
 	bool connection;
+	bool safi;
 };
 
 struct Request

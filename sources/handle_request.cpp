@@ -112,7 +112,6 @@ struct Ret  handle_POST_Request(Request &request, std::vector<ServerData> &serve
 	std::ofstream			ofs;
 	std::string				payload;
 
-
     if (data.locations[data.location_num].getAllowedMethods().find("POST")->second == false ||
 		data.locations[data.location_num].getUploadEnabled() == false)
     	return HandleErrors("405 Not Allowed", server_data, data.server_num);
@@ -315,21 +314,36 @@ struct Ret handle_GET_Request(Request &request, std::vector<ServerData> &server_
 	return generateResponse(response);
 }
 
-struct Ret handleRequest(std::string buff, std::vector<ServerData> &server_data)
+struct Ret handleRequest(std::string buff, std::vector<ServerData> &server_data, bool done)
 {
 	Request					request;
 	std::string				HeaderToken;
 	std::string 			method;
 	std::string				http_version;
 	RqLineData				req_line_data;
+	Ret						ret;
 
 	request.request_line = getToken(buff, CRLF);
+	method = getToken(request.request_line, SP);
+	ret.safi = false;
+	if (!done && method == "POST") {
+		size_t pos;
+		int pos0 = buff.find("Content-Length:");
+		if (pos0 != std::string::npos) {
+			int n = atoi(std::string(buff, pos0+ 15).c_str());
+			if (n < 0)
+				return ret;
+			size_t pos1 = buff.find(CRLFCRLF);
+			if (n > std::string(buff, pos1+ 4).length()) {
+				return ret;
+			}
+		}
+	}
 	while ((HeaderToken = getToken(buff, CRLF)) != "") {
 		request.request_headers.insert(std::make_pair(getToken(HeaderToken, HeaderPairsDelim),
 								getToken(HeaderToken, HeaderPairsDelim)));
 	}
 	request.body = buff;
-	method = getToken(request.request_line, SP);
 	req_line_data.path = getToken(request.request_line, SP);
 	http_version = request.request_line;
 	if (request.request_headers.count("Host") != 1) {

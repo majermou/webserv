@@ -126,6 +126,7 @@ struct Ret generateResponse(struct Response resp)
 		ret.connection = true;
 	else
 		ret.connection = false;
+	ret.safi = true;
 	return ret;
 }
 
@@ -154,7 +155,7 @@ std::vector<filenames>	parsePost(std::string body, std::string boundary)
 	filename.path = getToken(str, "filename=\"");
 	filename.path = getToken(str, "\"");
 	filename.data = getToken(str, CRLFCRLF);
-	filename.data = getToken(str, CRLFCRLF);
+	filename.data = str;
 	vect.push_back(filename);
 	return vect;
 }
