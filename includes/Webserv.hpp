@@ -64,7 +64,7 @@ struct Response
 	std::string body;
 };
 
-struct Ret handleRequest(std::string buff, std::vector<ServerData> &data);
+struct Ret handleRequest(std::string buff, std::vector<ServerData> &data, bool done);
 
 void outputLogs(std::string logs);
 

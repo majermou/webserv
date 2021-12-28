@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 13:24:54 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/28 10:49:23 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/28 14:22:44 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,19 +108,19 @@ void Server::run(void)
 				if (checkCrlf(_rawRequest[readyFds[i]], readyFds[i]) == true ||
 				    tmp == 0)
 				{
-					if (tmp != 0)
+					hr = handleRequest(_rawRequest[readyFds[i]],
+					                   _mypoll.getData(), (tmp == 0));
+					if (hr.safi == true)
 					{
-						hr       = handleRequest(_rawRequest[readyFds[i]],
-						                         _mypoll.getData());
 						response = hr.response;
 						send(readyFds[i], response.c_str(), response.length(),
 						     0);
-					}
-					if (tmp == 0 || hr.connection == false)
-					{
-						_rawRequest.erase(readyFds[i]);
-						_mypoll.clearActiveFd(readyFds[i]);
-						close(readyFds[i]);
+						if (tmp == 0 || hr.connection == false)
+						{
+							_rawRequest.erase(readyFds[i]);
+							_mypoll.clearActiveFd(readyFds[i]);
+							close(readyFds[i]);
+						}
 					}
 				}
 				i++;
