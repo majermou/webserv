@@ -323,6 +323,7 @@ struct Ret handleRequest(std::string buff, std::vector<ServerData> &server_data,
 	std::string				http_version;
 	RqLineData				req_line_data;
 	Ret						ret;
+	std::string				query;
 
 	request.request_line = getToken(buff, CRLF);
 	method = getToken(request.request_line, SP);
@@ -338,14 +339,16 @@ struct Ret handleRequest(std::string buff, std::vector<ServerData> &server_data,
 			if (n > std::string(buff, pos1+ 4).length()) {
 				return ret;
 			}
-		}
+		} else 
+			return HandleErrors("411 Length Required", server_data, -1);
 	}
 	while ((HeaderToken = getToken(buff, CRLF)) != "") {
 		request.request_headers.insert(std::make_pair(getToken(HeaderToken, HeaderPairsDelim),
 								getToken(HeaderToken, HeaderPairsDelim)));
 	}
 	request.body = buff;
-	req_line_data.path = getToken(request.request_line, SP);
+	query = getToken(request.request_line, SP);
+	req_line_data.path = getToken(query, "?");
 	http_version = request.request_line;
 	if (request.request_headers.count("Host") != 1) {
 		return HandleErrors("400 Bad Request", server_data, -1);
@@ -358,6 +361,8 @@ struct Ret handleRequest(std::string buff, std::vector<ServerData> &server_data,
 			return HandleErrors("505 HTTP Version Not Supported", server_data, req_line_data.server_num);
 		return HandleErrors("400 Bad Request", server_data, req_line_data.server_num);
 	}
+	if (request.body.length() > server_data[req_line_data.server_num].getClientBodySize())
+		return HandleErrors("413 Payload Too Large", server_data, req_line_data.server_num);
 	// if (locations[location_num].isCGI() == true)		/// CGI ///
 	//	return HandleCGI();
 	if (method == "GET")
