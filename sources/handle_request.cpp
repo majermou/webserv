@@ -320,31 +320,21 @@ struct Ret handle_GET_Request(Request &request, std::vector<ServerData> &server_
 	return generateResponse(response);
 }
 
-
-struct CGIparam {
-	std::string	method;
-	std::string	path;
-	std::string query;
-	std::string	content-type;
-	std::string	content-length;
-	std::string body;
-	std::string fastcgipass;
-}
-
 struct Ret	HandleCGI(Request &request, std::vector<ServerData> &server_data, RqLineData &data, std::string method) {
-	CGIparam	param;
+	CGIparam		param;
+	std::string		CGI_resp;
 
 	param.method = method;
 	param.path = data.path;
 	param.query = data.query;
 	if (request.request_headers.count("Content-Type") == 1)
-		param.content-type = request.request_headers.find("Content-Type")->second;
+		param.content_type = request.request_headers.find("Content-Type")->second;
 	if (request.request_headers.count("Content-Length") == 1)
-		param.content-length = request.request_headers.find("Content-Length")->second;
+		param.content_length = request.request_headers.find("Content-Length")->second;
 	param.body = request.body;
 	param.fastcgipass = data.locations[data.location_num].getFastCgiPass();
 	
-	// run cgi;
+	CGI_resp = runCgi(param);
 
 }
 

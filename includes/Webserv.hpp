@@ -64,6 +64,16 @@ struct Response
 	std::string body;
 };
 
+struct CGIparam {
+	std::string	method;
+	std::string	path;
+	std::string query;
+	std::string	content_type;
+	std::string	content_length;
+	std::string body;
+	std::string fastcgipass;
+};
+
 struct Ret handleRequest(std::string buff, std::vector<ServerData> &data, bool done);
 
 void outputLogs(std::string logs);
