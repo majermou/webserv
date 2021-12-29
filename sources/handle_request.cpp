@@ -15,6 +15,7 @@
 #define HeaderPairsDelim 	": "
 #define HTTPv1				"HTTP/1.1"
 #define HTTPv2				"HTTP/2"
+#define Mbytes				1000000
 
 
 
@@ -273,7 +274,6 @@ struct Ret handle_GET_Request(Request &request, std::vector<ServerData> &server_
 					return HandleErrors("500 Internal Server Error", server_data, data.server_num);
 				response.response_headers["Content-Type"] = "text/html; charset=UTF-8";
 			} else {
-				std::cout << data.path << std::endl;
 				if (data.locations[data.location_num].getDefaultFile().empty() == true)
 					return HandleErrors("403 Forbidden", server_data, data.server_num);
 				data.path += data.locations[data.location_num].getDefaultFile();
@@ -321,32 +321,32 @@ struct Ret handle_GET_Request(Request &request, std::vector<ServerData> &server_
 }
 
 
-// struct CGIparam {
-// 	std::string	method;
-// 	std::string	path;
-// 	std::string query;
-// 	std::string	content-type;
-// 	std::string	content-length;
-// 	std::string body;
-// 	std::string fastcgipass;
-// }
+struct CGIparam {
+	std::string	method;
+	std::string	path;
+	std::string query;
+	std::string	content-type;
+	std::string	content-length;
+	std::string body;
+	std::string fastcgipass;
+}
 
-// struct Ret	HandleCGI(Request &request, std::vector<ServerData> &server_data, RqLineData &data, std::string method) {
-// 	CGIparam	param;
+struct Ret	HandleCGI(Request &request, std::vector<ServerData> &server_data, RqLineData &data, std::string method) {
+	CGIparam	param;
 
-// 	param.method = method;
-// 	param.path = data.path;
-// 	param.query = data.query;
-// 	if (request.request_headers.count("Content-Type") == 1)
-// 		param.content-type = request.request_headers.find("Content-Type")->second;
-// 	if (request.request_headers.count("Content-Length") == 1)
-// 		param.content-length = request.request_headers.find("Content-Length")->second;
-// 	param.body = request.body;
-// 	param.fastcgipass = data.locations[data.location_num].getFastCgiPass();
+	param.method = method;
+	param.path = data.path;
+	param.query = data.query;
+	if (request.request_headers.count("Content-Type") == 1)
+		param.content-type = request.request_headers.find("Content-Type")->second;
+	if (request.request_headers.count("Content-Length") == 1)
+		param.content-length = request.request_headers.find("Content-Length")->second;
+	param.body = request.body;
+	param.fastcgipass = data.locations[data.location_num].getFastCgiPass();
 	
-// 	// run cgi;
+	// run cgi;
 
-// }
+}
 
 
 
@@ -395,7 +395,7 @@ struct Ret handleRequest(std::string buff, std::vector<ServerData> &server_data,
 			return HandleErrors("505 HTTP Version Not Supported", server_data, req_line_data.server_num);
 		return HandleErrors("400 Bad Request", server_data, req_line_data.server_num);
 	}
-	if (request.body.length() > server_data[req_line_data.server_num].getClientBodySize())
+	if (request.body.length() > server_data[req_line_data.server_num].getClientBodySize() * Mbytes)
 		return HandleErrors("413 Payload Too Large", server_data, req_line_data.server_num);
 	// if (locations[location_num].isCGI() == true)		/// CGI ///
 	//	return HandleCGI();
