@@ -323,9 +323,12 @@ struct Ret handle_GET_Request(Request &request, std::vector<ServerData> &server_
 struct Ret	HandleCGI(Request &request, std::vector<ServerData> &server_data, RqLineData &data, std::string method) {
 	CGIparam		param;
 	std::string		CGI_resp;
+	Response		response;
 
 	param.method = method;
 	param.path = data.path;
+	param.path = server_data[data.server_num].getRootDir() + data.path;
+	checkvalid(param.path);
 	param.query = data.query;
 	if (request.request_headers.count("Content-Type") == 1)
 		param.content_type = request.request_headers.find("Content-Type")->second;
@@ -333,9 +336,22 @@ struct Ret	HandleCGI(Request &request, std::vector<ServerData> &server_data, RqL
 		param.content_length = request.request_headers.find("Content-Length")->second;
 	param.body = request.body;
 	param.fastcgipass = data.locations[data.location_num].getFastCgiPass();
-	
+	std::cout << "----{{{{{{{{";
 	CGI_resp = runCgi(param);
 
+	response.status_line = HTTPv1;
+	response.status_line += " ";
+	if (CGI_resp.find("Status") != std::string::npos) {
+		getToken(CGI_resp, "Status: ");
+		response.status_line += getToken(CGI_resp, CRLF);
+	} else
+		response.status_line += "200 OK";
+	getToken(CGI_resp, "Content-type: ");
+	response.response_headers["Content-Type"] = getToken(CGI_resp, CRLF);
+	getToken(CGI_resp, CRLF);
+	response.body = CGI_resp;
+	response.response_headers["Content-Length"] = std::to_string(response.body.length()); // c++11
+	return generateResponse(response);
 }
 
 
@@ -387,8 +403,8 @@ struct Ret handleRequest(std::string buff, std::vector<ServerData> &server_data,
 	}
 	if (request.body.length() > server_data[req_line_data.server_num].getClientBodySize() * Mbytes)
 		return HandleErrors("413 Payload Too Large", server_data, req_line_data.server_num);
-	// if (locations[location_num].isCGI() == true)		/// CGI ///
-	//	return HandleCGI();
+	if (req_line_data.locations[req_line_data.location_num].isCGI() == true)
+		return HandleCGI(request, server_data, req_line_data, method);
 	if (method == "GET")
 		return handle_GET_Request(request, server_data, req_line_data);
 	else if (method == "DELETE")
