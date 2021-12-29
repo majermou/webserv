@@ -77,5 +77,6 @@ struct CGIparam {
 struct Ret handleRequest(std::string buff, std::vector<ServerData> &data, bool done);
 
 void outputLogs(std::string logs);
+std::string runCgi(CGIparam p);
 
 #endif  // !WEBSERV_HPP
