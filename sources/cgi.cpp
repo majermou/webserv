@@ -6,16 +6,13 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/26 18:56:39 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/26 19:22:33 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/29 18:34:42 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <unistd.h>
+#include "../includes/Webserv.hpp"
 
-#include <iostream>
-#include <string>
-
-std::string runCgi(void)
+std::string runCgi(CGIparam p)
 {
 	int pid;
 	int fd[2];
@@ -23,19 +20,21 @@ std::string runCgi(void)
 	int state;
 	char buf[1024];
 	std::string cgiResponse;
-	const char *phpArgv[] = {"/Users/abel-mak/.brew/bin/php-cgi", 0};
+	char *phpArgv[2] = {0, 0};
 	int bytes;
+
+	phpArgv[0] = const_cast<char *>(p.fastcgipass.c_str());
 
 	pipe(fd);
 	pipe(resFd);
 
-	setenv("QUERY_STRING", "", 1);
+	setenv("QUERY_STRING", p.query.c_str(), 1);
 	setenv("REDIRECT_STATUS", "true", 1);
-	setenv("SCRIPT_FILENAME", "/Users/abel-mak/test.php", 1);
-	setenv("REQUEST_METHOD", "POST", 1);
+	setenv("SCRIPT_FILENAME", p.path.c_str(), 1);
+	setenv("REQUEST_METHOD", p.method.c_str(), 1);
 	setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
-	setenv("CONTENT_TYPE", "application/x-www-form-urlencoded", 1);
-	setenv("CONTENT_LENGTH", "7", 1);
+	setenv("CONTENT_TYPE", p.content_type.c_str(), 1);
+	setenv("CONTENT_LENGTH", p.content_length.c_str(), 1);
 
 	write(fd[1], "test=42", 7);
 	pid = fork();
@@ -45,7 +44,7 @@ std::string runCgi(void)
 		close(resFd[0]);
 		dup2(fd[0], 0);
 		dup2(resFd[1], 1);
-		execv("/Users/abel-mak/.brew/bin/php-cgi", (char **)phpArgv);
+		execv(phpArgv[0], (char **)phpArgv);
 	}
 	else
 	{
