@@ -67,6 +67,8 @@ std::string	contentType(std::string path) {
 	std::string extention;
 
 	getToken(path, ".");
+	while (path.find(".") != std::string::npos)
+		getToken(path, ".");
 	extention = getToken(path, ".");
 	if (extention == "html" || extention == "htm")
 		return "text/html";
