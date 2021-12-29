@@ -17,6 +17,7 @@
 #define HTTPv2				"HTTP/2"
 
 
+
 int	examineLocations(std::vector<Location> locations, std::string path);
 int	examineServers(Request &req, std::vector<ServerData> &data);
 void checkvalid(std::string &path);
@@ -26,6 +27,7 @@ std::string	contentType(std::string path);
 
 struct RqLineData {
 	std::string path;
+	std::string query;
 	int server_num;
 	int location_num;
 	std::vector<Location> locations;
@@ -37,6 +39,8 @@ struct filenames {
 };
 
 std::vector<filenames>	parsePost(std::string body, std::string boundary);
+
+
 
 
 
@@ -269,6 +273,7 @@ struct Ret handle_GET_Request(Request &request, std::vector<ServerData> &server_
 					return HandleErrors("500 Internal Server Error", server_data, data.server_num);
 				response.response_headers["Content-Type"] = "text/html; charset=UTF-8";
 			} else {
+				std::cout << data.path << std::endl;
 				if (data.locations[data.location_num].getDefaultFile().empty() == true)
 					return HandleErrors("403 Forbidden", server_data, data.server_num);
 				data.path += data.locations[data.location_num].getDefaultFile();
@@ -315,6 +320,36 @@ struct Ret handle_GET_Request(Request &request, std::vector<ServerData> &server_
 	return generateResponse(response);
 }
 
+
+// struct CGIparam {
+// 	std::string	method;
+// 	std::string	path;
+// 	std::string query;
+// 	std::string	content-type;
+// 	std::string	content-length;
+// 	std::string body;
+// 	std::string fastcgipass;
+// }
+
+// struct Ret	HandleCGI(Request &request, std::vector<ServerData> &server_data, RqLineData &data, std::string method) {
+// 	CGIparam	param;
+
+// 	param.method = method;
+// 	param.path = data.path;
+// 	param.query = data.query;
+// 	if (request.request_headers.count("Content-Type") == 1)
+// 		param.content-type = request.request_headers.find("Content-Type")->second;
+// 	if (request.request_headers.count("Content-Length") == 1)
+// 		param.content-length = request.request_headers.find("Content-Length")->second;
+// 	param.body = request.body;
+// 	param.fastcgipass = data.locations[data.location_num].getFastCgiPass();
+	
+// 	// run cgi;
+
+// }
+
+
+
 struct Ret handleRequest(std::string buff, std::vector<ServerData> &server_data, bool done)
 {
 	Request					request;
@@ -323,7 +358,6 @@ struct Ret handleRequest(std::string buff, std::vector<ServerData> &server_data,
 	std::string				http_version;
 	RqLineData				req_line_data;
 	Ret						ret;
-	std::string				query;
 
 	request.request_line = getToken(buff, CRLF);
 	method = getToken(request.request_line, SP);
@@ -347,8 +381,8 @@ struct Ret handleRequest(std::string buff, std::vector<ServerData> &server_data,
 								getToken(HeaderToken, HeaderPairsDelim)));
 	}
 	request.body = buff;
-	query = getToken(request.request_line, SP);
-	req_line_data.path = getToken(query, "?");
+	req_line_data.query = getToken(request.request_line, SP);
+	req_line_data.path = getToken(req_line_data.query, "?");
 	http_version = request.request_line;
 	if (request.request_headers.count("Host") != 1) {
 		return HandleErrors("400 Bad Request", server_data, -1);
