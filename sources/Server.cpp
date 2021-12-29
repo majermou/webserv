@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 13:24:54 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/28 17:03:24 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/29 13:50:25 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,7 +98,7 @@ void Server::run(void)
 				bzero(buf, _bufSize);
 				while ((tmp = recv(readyFds[i], buf, _bufSize - 1, 0)) > 0)
 				{
-					_rawRequest[readyFds[i]] += buf;
+					_rawRequest[readyFds[i]].append(buf, tmp);
 				}
 				if (tmp < 0 && errno != EAGAIN)
 				{
