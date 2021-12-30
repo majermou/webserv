@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 13:24:54 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/29 17:00:32 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/30 17:39:44 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,7 @@
  *  set pointed to by fdset; otherwise returns 0.
  */
 
+#include <algorithm>
 #include <cstdio>
 
 bool checkCrlf(std::string &req, int fd)
@@ -58,6 +59,68 @@ Server::Server(const std::vector<ServerData> &data)
 Server::~Server(void)
 {
 }
+
+void Server::sendResponse(void)
+{
+	std::vector<int> wReadyFds = _mypoll.getWriteReadyFds();
+	int i;
+	int tmp;
+	int chunk;
+
+	i = 0;
+	while (i < wReadyFds.size())
+	{
+		// std::cout << i << " wReadyFds: " << wReadyFds.size() << std::endl;
+		if (_responseData.find(wReadyFds[i]) != _responseData.end())
+		{
+			tmp =
+			    send(wReadyFds[i], _responseData[wReadyFds[i]].response.data(),
+			         _responseData[wReadyFds[i]].response.size(), 0);
+			signal(SIGPIPE, SIG_IGN);
+			if (tmp < 0)
+			{
+				// std::cout << "-------B-------" << std::endl;
+				// std::cout << strerror(errno) << std::endl;
+				// std::cout << wReadyFds[i] << std::endl;
+				// std::cout << "-------E-------" << std::endl;
+			}
+			else if (tmp == _responseData[wReadyFds[i]].response.length())
+			{
+				if (_responseData[wReadyFds[i]].connection == false)
+				{
+					_mypoll.clearActiveFd(wReadyFds[i]);
+					// std::cout << "-------B-------" << std::endl;
+					// std::cout << "sendResp closed" << std::endl;
+					close(wReadyFds[i]);
+					// std::cout << "-------E-------" << std::endl;
+				}
+				//	std::cout << "-------B-------" << std::endl;
+				//	std::cout << "cleared writeactive and erased" << std::endl;
+				_mypoll.clearWriteActiveFd(wReadyFds[i]);
+				_responseData.erase(wReadyFds[i]);
+				// std::cout << "-------E-------" << std::endl;
+			}
+			else if (tmp != _responseData[wReadyFds[i]].response.length())
+			{
+				//	std::cout << tmp << " *************** "
+				//	          << _responseData[wReadyFds[i]].response.length()
+				//	          << std::endl;
+				_responseData[wReadyFds[i]].response =
+				    _responseData[wReadyFds[i]].response.substr(tmp);
+			}
+			// std::cout << tmp << " << tmp | _resdata >> "
+			// std::cout << "_resdata"
+			//          << _responseData[wReadyFds[i]].response.length()
+			//          << std::endl;
+		}
+		i++;
+	}
+}
+
+/*
+ * add clearWriteFd because _writefds is used in sendResponse
+ * so that, don't use closed fd.
+ */
 
 void Server::run(void)
 {
@@ -112,13 +175,23 @@ void Server::run(void)
 					                   _mypoll.getData(), (tmp == 0));
 					if (hr.safi == true)
 					{
-						response = hr.response;
-						send(readyFds[i], response.c_str(), response.length(),
-						     0);
-						if (tmp == 0 || hr.connection == false)
+						if (tmp != 0)
+						{
+							_responseData[readyFds[i]] = hr;
+							_mypoll.setWriteActiveFd(readyFds[i]);
+							// response = hr.response;
+							// send(readyFds[i], response.c_str(),
+							//     response.length(), 0);
+						}
+						if (tmp == 0)
 						{
 							_mypoll.clearActiveFd(readyFds[i]);
+							_mypoll.clearWriteActiveFd(readyFds[i]);
+							_mypoll.clearWriteFd(readyFds[i]);
+							// std::cout << "-------B-------" << std::endl;
+							// std::cout << "other closed" << std::endl;
 							close(readyFds[i]);
+							// std::cout << "-------E-------" << std::endl;
 						}
 						_rawRequest.erase(readyFds[i]);
 					}
@@ -126,5 +199,6 @@ void Server::run(void)
 				i++;
 			}
 		}
+		this->sendResponse();
 	}
 }
