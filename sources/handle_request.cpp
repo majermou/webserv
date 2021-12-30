@@ -56,7 +56,7 @@ struct Ret HandleErrors(std::string errorType, std::vector<ServerData> &server_d
 		response.body += "</html>";
 		response.body += CRLFCRLF;
 	}
-	response.response_headers["Content-Length"] = NumberToString(response.body.length()); // c++11
+	response.response_headers["Content-Length"] = NumberToString(response.body.length());
 	return generateResponse(response);
 }
 
@@ -112,7 +112,7 @@ struct Ret  handle_POST_Request(Request &request, std::vector<ServerData> &serve
 		response.response_headers["Cookie"] = request.request_headers.find("Cookie")->second;
 	}
     response.response_headers["Content-Type"] = "text/html; charset=UTF-8";
-    response.response_headers["Content-Length"] = NumberToString(response.body.length()); ///// c++11
+    response.response_headers["Content-Length"] = NumberToString(response.body.length());
     if (request.request_headers.count("Connection") == 0 ||
 		request.request_headers.find("Connection")->second == "keep-alive") {
 		response.response_headers["Connection"] = "keep-alive";
@@ -158,7 +158,7 @@ struct Ret	handle_DELETE_Request(Request &request, std::vector<ServerData> &serv
     response.status_line = HTTPv1;
 	response.status_line += " 200 KO";
     response.response_headers["Content-Type"] = "text/html; charset=UTF-8";
-    response.response_headers["Content-Length"] = NumberToString(response.body.length()); ///// c++11
+    response.response_headers["Content-Length"] = NumberToString(response.body.length()); 
     if (request.request_headers.count("Connection") == 0 ||
 		request.request_headers.find("Connection")->second == "keep-alive") {
 		response.response_headers["Connection"] = "keep-alive";
@@ -204,7 +204,7 @@ struct Ret handle_GET_Request(Request &request, std::vector<ServerData> &server_
 
 	if (data.locations[data.location_num].isRedirection() == true) {
 		return_code += " ";
-		return_code += NumberToString(data.locations[data.location_num].getReturnCode()); // c++11
+		return_code += NumberToString(data.locations[data.location_num].getReturnCode());
 		return_code += " Moved Permanently";
 		data.path = data.locations[data.location_num].getReturnUrl();
 		data.location_num = examineLocations(data.locations, data.path);
@@ -230,7 +230,9 @@ struct Ret handle_GET_Request(Request &request, std::vector<ServerData> &server_
 			} else {
 				if (data.locations[data.location_num].getDefaultFile().empty() == true)
 					return HandleErrors("403 Forbidden", server_data, data.server_num);
+				data.path += "/";
 				data.path += data.locations[data.location_num].getDefaultFile();
+				checkvalid(data.path);
 			}
 		}
 	}
@@ -265,7 +267,7 @@ struct Ret handle_GET_Request(Request &request, std::vector<ServerData> &server_
 	}
 	if (response.response_headers.count("Content-Type") != 1)
 		response.response_headers["Content-Type"] = contentType(data.path);
-	response.response_headers["Content-Length"] = NumberToString(response.body.length()); // c++11
+	response.response_headers["Content-Length"] = NumberToString(response.body.length());
 	if (request.request_headers.count("Connection") == 0 ||
 		request.request_headers.find("Connection")->second == "keep-alive") {
 		response.response_headers["Connection"] = "keep-alive";
@@ -290,7 +292,6 @@ struct Ret	HandleCGI(Request &request, std::vector<ServerData> &server_data, RqL
 		param.content_length = request.request_headers.find("Content-Length")->second;
 	param.body = request.body;
 	param.fastcgipass = data.locations[data.location_num].getFastCgiPass();
-	std::cout << "----{{{{{{{{";
 	CGI_resp = runCgi(param);
 
 	response.status_line = HTTPv1;
@@ -304,7 +305,7 @@ struct Ret	HandleCGI(Request &request, std::vector<ServerData> &server_data, RqL
 	response.response_headers["Content-Type"] = getToken(CGI_resp, CRLF);
 	getToken(CGI_resp, CRLF);
 	response.body = CGI_resp;
-	response.response_headers["Content-Length"] = NumberToString(response.body.length()); // c++11
+	response.response_headers["Content-Length"] = NumberToString(response.body.length());
 	return generateResponse(response);
 }
 
@@ -344,6 +345,11 @@ struct Ret handleRequest(std::string buff, std::vector<ServerData> &server_data,
 	http_version = request.request_line;
 	if (request.request_headers.count("Host") != 1) {
 		return HandleErrors("400 Bad Request", server_data, -1);
+	}
+	if (request.request_headers.find("Host")->second.find(":") != std::string::npos) {
+		std::string temp = getToken(request.request_headers.find("Host")->second, ":");
+		request.request_headers.erase("Host");
+		request.request_headers.insert(std::make_pair("Host", temp));
 	}
 	req_line_data.server_num = examineServers(request, server_data);
 	req_line_data.locations = server_data[req_line_data.server_num].getLocations();

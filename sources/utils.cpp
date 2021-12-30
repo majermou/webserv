@@ -30,12 +30,16 @@ int	examineLocations(std::vector<Location> locations, std::string path)
 }
 
 int	examineServers(Request &req, std::vector<ServerData> &data) {
-	for (int i = data.size() - 1; i > 0; i--) {
+	int		i;
+
+	for (i = data.size() - 1; i > 0; i--) {
 		if (std::find(data[i].getNames().begin(), data[i].getNames().end(),
-			req.request_headers.find("Host")->second) != data[i].getNames().end())
+			req.request_headers.find("Host")->second) != data[i].getNames().end()) {
+			std::cout << req.request_headers.find("Host")->second << "||||\n";
 			return i;
+		}
 	}
-	return data.size() - 1;
+	return i;
 }
 
 void checkvalid(std::string &path)
