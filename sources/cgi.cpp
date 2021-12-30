@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/26 18:56:39 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/29 18:34:42 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/30 17:47:04 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ std::string runCgi(CGIparam p)
 	setenv("CONTENT_TYPE", p.content_type.c_str(), 1);
 	setenv("CONTENT_LENGTH", p.content_length.c_str(), 1);
 
-	write(fd[1], "test=42", 7);
+	write(fd[1], p.body.c_str(), atoi(p.content_length.c_str()));
 	pid = fork();
 	if (pid == 0)
 	{
