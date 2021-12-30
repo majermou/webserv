@@ -82,6 +82,7 @@ struct CGIparam {
 	std::string	content_length;
 	std::string body;
 	std::string fastcgipass;
+	std::string cookie;
 };
 
 struct RqLineData {
