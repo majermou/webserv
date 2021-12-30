@@ -239,25 +239,15 @@ struct Ret handle_GET_Request(Request &request, std::vector<ServerData> &server_
 	else
 		return HandleErrors("404 Not Found", server_data, data.server_num);
 	if (response.body.empty() == true) {
-		if (contentType(data.path) == "image/jpeg" || contentType(data.path) == "image/gif" || 
-			contentType(data.path) == "image/png" ) {
-			file.open(data.path, std::ios::binary);
-			if (file.is_open()) {
-				while (!file.eof()) {
-					file >> std::noskipws >> buff;
-					response.body += buff;
-				}
-				file.close();
-			} else
-				return HandleErrors("500 Internal Server Error", server_data, data.server_num);
-		} else {
-			file.open(data.path);
-			for (std::string str; getline(file, str); ) {
-				response.body += str;
-				response.body += CRLF;
+		file.open(data.path, std::ios::binary);
+		if (file.is_open()) {
+			while (!file.eof()) {
+				file >> std::noskipws >> buff;
+				response.body += buff;
 			}
 			file.close();
-		}
+		} else
+			return HandleErrors("500 Internal Server Error", server_data, data.server_num);
 	}
 	response.status_line += HTTPv1;
 	response.status_line += return_code;
