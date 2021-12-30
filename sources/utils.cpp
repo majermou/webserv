@@ -1,25 +1,11 @@
-#include <sys/stat.h>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <ctime>
-#include <map>
-#include <unistd.h>
-#include <dirent.h>
-#include <sys/types.h>
 #include "../includes/Webserv.hpp"
 
-#define SP               	" "
-#define CRLF             	"\r\n"
-#define CRLFCRLF         	"\r\n\r\n"
-#define HeaderPairsDelim 	": "
-#define HTTPv1				"HTTP/1.1"
-#define HTTPv2				"HTTP/2"
+std::string NumberToString(int number) {
+    std::ostringstream oss;
 
-struct filenames {
-	std::string	data;
-	std::string	path;
-};
+    oss << number;
+    return oss.str();
+}
 
 std::string getToken(std::string &str, std::string delimiter)
 {
