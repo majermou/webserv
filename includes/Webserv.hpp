@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include <algorithm>
 #include <cctype>
@@ -37,11 +38,20 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <ctime>
 
 #include "Location.hpp"
 #include "ServerData.hpp"
 #define log  std::cout <<
 #define line << std::endl
+
+#define SP               	" "
+#define CRLF             	"\r\n"
+#define CRLFCRLF         	"\r\n\r\n"
+#define HeaderPairsDelim 	": "
+#define HTTPv1				"HTTP/1.1"
+#define HTTPv2				"HTTP/2"
+#define Mbytes				1000000
 
 struct Ret
 {
@@ -74,8 +84,28 @@ struct CGIparam {
 	std::string fastcgipass;
 };
 
-struct Ret handleRequest(std::string buff, std::vector<ServerData> &data, bool done);
+struct RqLineData {
+	std::string path;
+	std::string query;
+	int server_num;
+	int location_num;
+	std::vector<Location> locations;
+};
 
+struct filenames {
+	std::string	data;
+	std::string	path;
+};
+
+int	examineLocations(std::vector<Location> locations, std::string path);
+int	examineServers(Request &req, std::vector<ServerData> &data);
+void checkvalid(std::string &path);
+std::string getToken(std::string &str, std::string delimiter);
+struct Ret generateResponse(struct Response resp);
+std::string	contentType(std::string path);
+std::string NumberToString(int number);
+std::vector<filenames>	parsePost(std::string body, std::string boundary);
+struct Ret handleRequest(std::string buff, std::vector<ServerData> &data, bool done);
 void outputLogs(std::string logs);
 std::string runCgi(CGIparam p);
 

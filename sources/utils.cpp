@@ -1,25 +1,11 @@
-#include <sys/stat.h>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <ctime>
-#include <map>
-#include <unistd.h>
-#include <dirent.h>
-#include <sys/types.h>
 #include "../includes/Webserv.hpp"
 
-#define SP               	" "
-#define CRLF             	"\r\n"
-#define CRLFCRLF         	"\r\n\r\n"
-#define HeaderPairsDelim 	": "
-#define HTTPv1				"HTTP/1.1"
-#define HTTPv2				"HTTP/2"
+std::string NumberToString(int number) {
+    std::ostringstream oss;
 
-struct filenames {
-	std::string	data;
-	std::string	path;
-};
+    oss << number;
+    return oss.str();
+}
 
 std::string getToken(std::string &str, std::string delimiter)
 {
@@ -44,12 +30,16 @@ int	examineLocations(std::vector<Location> locations, std::string path)
 }
 
 int	examineServers(Request &req, std::vector<ServerData> &data) {
-	for (int i = data.size() - 1; i > 0; i--) {
+	int		i;
+
+	for (i = data.size() - 1; i > 0; i--) {
 		if (std::find(data[i].getNames().begin(), data[i].getNames().end(),
-			req.request_headers.find("Host")->second) != data[i].getNames().end())
+			req.request_headers.find("Host")->second) != data[i].getNames().end()) {
+			std::cout << req.request_headers.find("Host")->second << "||||\n";
 			return i;
+		}
 	}
-	return data.size() - 1;
+	return i;
 }
 
 void checkvalid(std::string &path)
