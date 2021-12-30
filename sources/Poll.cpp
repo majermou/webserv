@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/11 15:48:46 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/29 18:26:16 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/30 16:26:20 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 #include "../includes/ServerData.hpp"
 #include "../includes/Webserv.hpp"
 
-Poll::Poll(void) : _sockAddrVal()
+Poll::Poll(void)
 {
 }
 
@@ -33,33 +33,33 @@ Poll::~Poll(void)
 	}
 }
 
-std::vector<int> getAllPorts(const std::vector<ServerData> &data)
-{
-	size_t i;
-	std::vector<int> allPorts;
-
-	i = 0;
-	while (i < data.size())
-	{
-		allPorts.push_back(data[i].getPort());
-		i++;
-	}
-	return (allPorts);
-}
+// std::vector<int> getAllPorts(const std::vector<ServerData> &data)
+//{
+//	size_t i;
+//	std::vector<int> allPorts;
+//
+//	i = 0;
+//	while (i < data.size())
+//	{
+//		allPorts.push_back(data[i].getPort());
+//		i++;
+//	}
+//	return (allPorts);
+// }
 
 /*
  * set up socket fds for each port
  * set socket as activefds so we can monitor them using select
  */
 
-Poll::Poll(std::vector<ServerData> data)
-    : _queue(10), _sockAddrVal(), _data(data)
+Poll::Poll(std::vector<ServerData> data) : _queue(10), _data(data)
 {
 	int tmpMasterSocket;
 	int optval;
 	int i;
 	struct sockaddr_in server;
 
+	FD_ZERO(&_writeActivefds);
 	FD_ZERO(&_activefds);
 	i = 0;
 	while (i < _data.size())
@@ -130,13 +130,37 @@ std::vector<int> Poll::getReadyfds(void)
 	int i;
 	int slavesocket;
 	std::vector<int> res;
-	// char buf[1024];
 	std::map<int, std::string> _rawRequest;
 	std::string response;
 	unsigned int len;
+	// struct timeval tv;
 
+	// i = 0;
+	// FD_ZERO(&_writefds);
+	// while (i < _writeReadyFds.size())
+	//{
+	//	FD_SET(i, &_writefds);
+	//	i++;
+	// }
+
+	/**************************************************************************/
+
+	// tv.tv_sec  = 5;
+	// tv.tv_usec = 0;
+	//i = 0;
+	// while (i < FD_SETSIZE)
+	//{
+	//	if (FD_ISSET(i, &_activefds) != 0)
+	//	{
+	//		// std::cout << "active: " << i << std::endl;
+	//	}
+	//	i++;
+	// }
+	memcpy(&_writefds, &_writeActivefds, sizeof(_writefds));
 	memcpy(&_readfds, &_activefds, sizeof(_readfds));
-	sret = select(FD_SETSIZE, &_readfds, NULL, NULL, NULL);
+	// std::cout << "selec BEGIN" << std::endl;
+	sret = select(FD_SETSIZE, &_readfds, &_writefds, NULL, NULL);
+	// std::cout << "selec END" << std::endl;
 
 	i = 0;
 	while (i < _masterSockets.size())
@@ -173,6 +197,40 @@ std::vector<int> Poll::getReadyfds(void)
 		i++;
 	}
 	return (res);
+}
+
+std::vector<int> Poll::getWriteReadyFds(void)
+{
+	int i;
+	std::vector<int> res;
+
+	i = 0;
+	while (i < FD_SETSIZE)
+	{
+		if ((find(_masterSockets.begin(), _masterSockets.end(), i) ==
+		     _masterSockets.end()) &&
+		    FD_ISSET(i, &_writefds) != 0)
+		{
+			res.push_back(i);
+		}
+		i++;
+	}
+	return (res);
+}
+
+void Poll::setWriteActiveFd(int fd)
+{
+	FD_SET(fd, &_writeActivefds);
+}
+
+void Poll::clearWriteActiveFd(int fd)
+{
+	FD_CLR(fd, &_writeActivefds);
+}
+
+void Poll::clearWriteFd(int fd)
+{
+	FD_CLR(fd, &_writefds);
 }
 
 void Poll::clearActiveFd(int fd)
