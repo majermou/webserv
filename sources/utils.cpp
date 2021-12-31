@@ -35,7 +35,6 @@ int	examineServers(Request &req, std::vector<ServerData> &data) {
 	for (i = data.size() - 1; i > 0; i--) {
 		if (std::find(data[i].getNames().begin(), data[i].getNames().end(),
 			req.request_headers.find("Host")->second) != data[i].getNames().end()) {
-			std::cout << req.request_headers.find("Host")->second << "||||\n";
 			return i;
 		}
 	}
@@ -92,12 +91,11 @@ struct Ret generateResponse(struct Response resp)
 		cookie = resp.response_headers.find("Cookie")->second;
 		resp.response_headers.erase("Cookie");
 		while (cookie.find("; ") != std::string::npos) {
-			str = getToken(cookie, "; ");
+			str = getToken(cookie, ";");
 			ret.response += "Set-Cookie: ";
 			ret.response += str;
 			ret.response += CRLF;
 		}
-		std::cout << "\n" << cookie << "\n";
 		ret.response += "Set-Cookie: ";
 		ret.response += cookie;
 		ret.response += CRLF;
