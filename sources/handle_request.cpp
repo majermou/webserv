@@ -240,9 +240,10 @@ struct Ret handle_GET_Request(Request &request, std::vector<ServerData> &server_
 	if (response.body.empty() == true) {
 		file.open(data.path, std::ios::binary);
 		if (file.is_open()) {
+			file >> std::noskipws >> buff;
 			while (!file.eof()) {
-				file >> std::noskipws >> buff;
 				response.body += buff;
+				file >> std::noskipws >> buff;
 			}
 			file.close();
 		} else
