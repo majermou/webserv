@@ -287,7 +287,7 @@ struct Ret	HandleCGI(Request &request, std::vector<ServerData> &server_data, RqL
 	if (request.request_headers.count("Cookie") == 1)
 		param.cookie = request.request_headers.find("Cookie")->second;
 	CGI_resp = runCgi(param);
-	if (param.execvRet < 0)
+	if (param.execvError == true)
 		return HandleErrors("500 Internal Server Error", server_data, data.server_num);
 	str = CGI_resp;
 	response.status_line = HTTPv1;
