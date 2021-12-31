@@ -6,13 +6,13 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/26 18:56:39 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/31 13:52:47 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/31 14:52:37 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Webserv.hpp"
 
-std::string runCgi(CGIparam p)
+std::string runCgi(CGIparam &p)
 {
 	int pid;
 	int fd[2];
@@ -23,8 +23,9 @@ std::string runCgi(CGIparam p)
 	char *argv[3] = {0, 0, 0};
 	int bytes;
 
-	argv[0] = const_cast<char *>(p.fastcgipass.c_str());
-	argv[1] = const_cast<char *>(p.path.c_str());
+	p.execvError = false;
+	argv[0]      = const_cast<char *>(p.fastcgipass.c_str());
+	argv[1]      = const_cast<char *>(p.path.c_str());
 
 	pipe(fd);
 	pipe(resFd);
@@ -54,7 +55,8 @@ std::string runCgi(CGIparam p)
 		close(resFd[1]);
 
 		waitpid(pid, &state, 0);
-
+		if (WEXITSTATUS(state) != 0)
+			p.execvError = true;
 		while ((bytes = read(resFd[0], buf, 1023)) > 0)
 		{
 			buf[bytes] = '\0';
