@@ -84,7 +84,7 @@ struct CGIparam
 	std::string body;
 	std::string fastcgipass;
 	std::string cookie;
-	int			execvRet;
+	bool		execvError;
 };
 
 struct RqLineData
@@ -113,6 +113,6 @@ std::vector<filenames> parsePost(std::string body, std::string boundary);
 struct Ret handleRequest(std::string buff, std::vector<ServerData> &data,
                          bool done);
 void outputLogs(std::string logs);
-std::string runCgi(CGIparam p);
+std::string runCgi(CGIparam &p);
 
 #endif  // !WEBSERV_HPP
