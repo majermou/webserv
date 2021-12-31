@@ -138,7 +138,10 @@ struct Ret	handle_DELETE_Request(Request &request, std::vector<ServerData> &serv
     if (stat(data.path.c_str(), &buffer) == 0) {
         if (buffer.st_mode & S_IFDIR)
             return HandleErrors("405 Not Allowed", server_data, data.server_num);
-        if (remove(data.path.c_str()) != 0)
+		if (access(data.path.c_str(), W_OK) == 0) {
+        	if (remove(data.path.c_str()) != 0)
+				return HandleErrors("500 Internal Server Error", server_data, data.server_num);
+		} else
             return HandleErrors("403 Forbidden", server_data, data.server_num);
     } else {
         return HandleErrors("404 Not Found", server_data, data.server_num);
@@ -346,13 +349,16 @@ struct Ret handleRequest(std::string buff, std::vector<ServerData> &server_data,
 	http_version = request.request_line;
 	if (request.request_headers.count("Host") != 1) {
 		return HandleErrors("400 Bad Request", server_data, -1);
-	}
-	if (request.request_headers.find("Host")->second.find(":") != std::string::npos) {
+	} else {
 		std::string temp = getToken(request.request_headers.find("Host")->second, ":");
+		int port = atoi(getToken(request.request_headers.find("Host")->second, ":").c_str());
+		if (port == 0)
+			port = 80;
+		req_line_data.port = port;
 		request.request_headers.erase("Host");
 		request.request_headers.insert(std::make_pair("Host", temp));
 	}
-	req_line_data.server_num = examineServers(request, server_data);
+	req_line_data.server_num = examineServers(request, server_data, req_line_data);
 	req_line_data.locations = server_data[req_line_data.server_num].getLocations();
 	req_line_data.location_num = examineLocations(req_line_data.locations, req_line_data.path);
 	if (http_version != HTTPv1) {
