@@ -270,6 +270,7 @@ struct Ret	HandleCGI(Request &request, std::vector<ServerData> &server_data, RqL
 	CGIparam		param;
 	std::string		CGI_resp;
 	Response		response;
+	std::string 	str;
 
 	param.method = method;
 	param.path = data.path;
@@ -282,10 +283,16 @@ struct Ret	HandleCGI(Request &request, std::vector<ServerData> &server_data, RqL
 		param.content_length = request.request_headers.find("Content-Length")->second;
 	param.body = request.body;
 	param.fastcgipass = data.locations[data.location_num].getFastCgiPass();
+	if (request.request_headers.count("Cookie") == 1) 
+		param.cookie = request.request_headers.find("Cookie")->second;
 	CGI_resp = runCgi(param);
-
+	str = CGI_resp;
 	response.status_line = HTTPv1;
 	response.status_line += " ";
+	if (CGI_resp.find("Set-Cookie: ") != std::string::npos) {
+		getToken(str, "Set-Cookie: ");
+		response.response_headers["Set-Cookie"] = getToken(str, CRLF);
+	}
 	if (CGI_resp.find("Status") != std::string::npos) {
 		getToken(CGI_resp, "Status: ");
 		response.status_line += getToken(CGI_resp, CRLF);
