@@ -29,12 +29,13 @@ int	examineLocations(std::vector<Location> locations, std::string path)
 	return LocationNum;
 }
 
-int	examineServers(Request &req, std::vector<ServerData> &data) {
+int	examineServers(Request &req, std::vector<ServerData> &data, RqLineData &p) {
 	int		i;
 
 	for (i = data.size() - 1; i > 0; i--) {
 		if (std::find(data[i].getNames().begin(), data[i].getNames().end(),
-			req.request_headers.find("Host")->second) != data[i].getNames().end()) {
+			req.request_headers.find("Host")->second) != data[i].getNames().end() &&
+			data[i].getPort() == p.port) {
 			return i;
 		}
 	}

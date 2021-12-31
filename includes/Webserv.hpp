@@ -94,6 +94,7 @@ struct RqLineData
 	int server_num;
 	int location_num;
 	std::vector<Location> locations;
+	int port;
 };
 
 struct filenames
@@ -102,17 +103,16 @@ struct filenames
 	std::string path;
 };
 
-int examineLocations(std::vector<Location> locations, std::string path);
-int examineServers(Request &req, std::vector<ServerData> &data);
-void checkvalid(std::string &path);
-std::string getToken(std::string &str, std::string delimiter);
-struct Ret generateResponse(struct Response resp);
-std::string contentType(std::string path);
-std::string NumberToString(int number);
-std::vector<filenames> parsePost(std::string body, std::string boundary);
-struct Ret handleRequest(std::string buff, std::vector<ServerData> &data,
-                         bool done);
-void outputLogs(std::string logs);
-std::string runCgi(CGIparam &p);
+int						examineLocations(std::vector<Location> locations, std::string path);
+int						examineServers(Request &req, std::vector<ServerData> &data, RqLineData &p);
+void					checkvalid(std::string &path);
+std::string				getToken(std::string &str, std::string delimiter);
+struct Ret				generateResponse(struct Response resp);
+std::string				contentType(std::string path);
+std::string				NumberToString(int number);
+std::vector<filenames>	parsePost(std::string body, std::string boundary);
+struct Ret				handleRequest(std::string buff, std::vector<ServerData> &data,bool done);
+void					outputLogs(std::string logs);
+std::string				runCgi(CGIparam &p);
 
 #endif  // !WEBSERV_HPP
