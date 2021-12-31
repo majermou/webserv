@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/26 18:56:39 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/30 17:47:04 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/31 13:10:33 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,10 +20,10 @@ std::string runCgi(CGIparam p)
 	int state;
 	char buf[1024];
 	std::string cgiResponse;
-	char *phpArgv[2] = {0, 0};
+	char *argv[2] = {0, 0};
 	int bytes;
 
-	phpArgv[0] = const_cast<char *>(p.fastcgipass.c_str());
+	argv[0] = const_cast<char *>(p.fastcgipass.c_str());
 
 	pipe(fd);
 	pipe(resFd);
@@ -35,6 +35,7 @@ std::string runCgi(CGIparam p)
 	setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
 	setenv("CONTENT_TYPE", p.content_type.c_str(), 1);
 	setenv("CONTENT_LENGTH", p.content_length.c_str(), 1);
+	setenv("HTTP_COOKIE", p.cookie.c_str(), 1);
 
 	write(fd[1], p.body.c_str(), atoi(p.content_length.c_str()));
 	pid = fork();
@@ -44,7 +45,7 @@ std::string runCgi(CGIparam p)
 		close(resFd[0]);
 		dup2(fd[0], 0);
 		dup2(resFd[1], 1);
-		execv(phpArgv[0], (char **)phpArgv);
+		execv(argv[0], (char **)argv);
 	}
 	else
 	{
@@ -58,7 +59,6 @@ std::string runCgi(CGIparam p)
 			buf[bytes] = '\0';
 			cgiResponse += buf;
 		}
-		std::cout << cgiResponse << std::endl;
 	}
 	close(fd[1]);
 	close(resFd[0]);
