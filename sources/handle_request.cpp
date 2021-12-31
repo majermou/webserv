@@ -283,9 +283,18 @@ struct Ret	HandleCGI(Request &request, std::vector<ServerData> &server_data, RqL
 		param.content_length = request.request_headers.find("Content-Length")->second;
 	param.body = request.body;
 	param.fastcgipass = data.locations[data.location_num].getFastCgiPass();
-	if (request.request_headers.count("Cookie") == 1) 
+	if (param.fastcgipass.empty() == true)
+		return HandleErrors("500 Internal Server Error", server_data, data.server_num);
+	if (request.request_headers.count("Cookie") == 1)
 		param.cookie = request.request_headers.find("Cookie")->second;
+
+	std::cout << param.fastcgipass << std::endl;
+	std::cout << "-------------------------\n";
 	CGI_resp = runCgi(param);
+	std::cout << "\n-------------------------\n";
+
+	std::cout << "{" << CGI_resp << "}\n";
+
 	str = CGI_resp;
 	response.status_line = HTTPv1;
 	response.status_line += " ";
