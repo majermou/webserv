@@ -271,6 +271,7 @@ struct Ret	HandleCGI(Request &request, std::vector<ServerData> &server_data, RqL
 	std::string		CGI_resp;
 	Response		response;
 	std::string 	str;
+	struct stat		buffer;
 
 	param.method = method;
 	param.path = data.path;
@@ -283,7 +284,7 @@ struct Ret	HandleCGI(Request &request, std::vector<ServerData> &server_data, RqL
 		param.content_length = request.request_headers.find("Content-Length")->second;
 	param.body = request.body;
 	param.fastcgipass = data.locations[data.location_num].getFastCgiPass();
-	if (param.fastcgipass.empty() == true)
+	if (param.fastcgipass.empty() == true || (stat(param.fastcgipass.c_str(), &buffer) != 0))
 		return HandleErrors("500 Internal Server Error", server_data, data.server_num);
 	if (request.request_headers.count("Cookie") == 1)
 		param.cookie = request.request_headers.find("Cookie")->second;
