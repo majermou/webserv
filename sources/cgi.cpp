@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/26 18:56:39 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/31 13:10:33 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/31 13:52:47 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,10 +20,11 @@ std::string runCgi(CGIparam p)
 	int state;
 	char buf[1024];
 	std::string cgiResponse;
-	char *argv[2] = {0, 0};
+	char *argv[3] = {0, 0, 0};
 	int bytes;
 
 	argv[0] = const_cast<char *>(p.fastcgipass.c_str());
+	argv[1] = const_cast<char *>(p.path.c_str());
 
 	pipe(fd);
 	pipe(resFd);

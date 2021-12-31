@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 13:24:54 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/31 09:46:37 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/31 14:07:36 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@
 #include <algorithm>
 #include <cstdio>
 
-bool checkCrlf(std::string &req, int fd)
+bool checkCrlf(std::string &req)
 {
 	int i;
 
@@ -63,8 +63,8 @@ Server::~Server(void)
 void Server::sendResponse(void)
 {
 	std::vector<int> wReadyFds = _mypoll.getWriteReadyFds();
-	int i;
-	int tmp;
+	size_t i;
+	long tmp;
 
 	i = 0;
 	while (i < wReadyFds.size())
@@ -77,7 +77,8 @@ void Server::sendResponse(void)
 			signal(SIGPIPE, SIG_IGN);
 			if (tmp >= 0)
 			{
-				if (tmp == _responseData[wReadyFds[i]].response.length())
+				if (static_cast<size_t>(tmp) ==
+				    _responseData[wReadyFds[i]].response.length())
 				{
 					if (_responseData[wReadyFds[i]].connection == false)
 					{
@@ -89,7 +90,8 @@ void Server::sendResponse(void)
 					_mypoll.clearWriteActiveFd(wReadyFds[i]);
 					_responseData.erase(wReadyFds[i]);
 				}
-				else if (tmp != _responseData[wReadyFds[i]].response.length())
+				else if (static_cast<size_t>(tmp) !=
+				         _responseData[wReadyFds[i]].response.length())
 				{
 					_responseData[wReadyFds[i]].response =
 					    _responseData[wReadyFds[i]].response.substr(tmp);
@@ -112,7 +114,7 @@ void Server::sendResponse(void)
 void Server::run(void)
 {
 	std::vector<int> readyFds;
-	int i;
+	size_t i;
 	int tmp;
 	char buf[_bufSize];
 	struct Ret hr;
@@ -140,8 +142,7 @@ void Server::run(void)
 					outputLogs("server error recv: " +
 					           std::string(strerror(errno)));
 				}
-				if (checkCrlf(_rawRequest[readyFds[i]], readyFds[i]) == true ||
-				    tmp == 0)
+				if (checkCrlf(_rawRequest[readyFds[i]]) == true || tmp == 0)
 				{
 					hr = handleRequest(_rawRequest[readyFds[i]],
 					                   _mypoll.getData(), (tmp == 0));
