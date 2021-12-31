@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/11 15:48:46 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/31 13:58:30 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/31 19:34:25 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,7 +72,11 @@ Poll::Poll(std::vector<ServerData> data) : _queue(10), _data(data)
 		    0)
 		{
 			outputLogs("server error bind: " + std::string(strerror(errno)));
-			std::cout << strerror(errno) << std::endl;
+			if (errno == EADDRINUSE)
+			{
+				std::cout << ntohs(server.sin_port) << " | " << strerror(errno)
+				          << std::endl;
+			}
 			// error bind failed
 		}
 		else if (listen(tmpMasterSocket, _queue) == 0)
@@ -181,6 +185,11 @@ std::vector<int> Poll::getWriteReadyFds(void)
 		i++;
 	}
 	return (res);
+}
+
+bool Poll::isReady(void)
+{
+	return (_masterSockets.size() > 0);
 }
 
 void Poll::setWriteActiveFd(int fd)

@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/11 15:32:24 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/30 16:26:12 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/31 19:27:19 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ public:
 	void clearWriteFd(int fd);
 	std::vector<ServerData> &getData(void);
 	std::vector<int> getWriteReadyFds(void);
+	bool isReady(void);
 };
 
 #endif /* ifndef POLL */

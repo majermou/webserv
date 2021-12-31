@@ -6,7 +6,7 @@
 /*   By: abel-mak <abel-mak@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 13:24:54 by abel-mak          #+#    #+#             */
-/*   Updated: 2021/12/31 14:07:36 by abel-mak         ###   ########.fr       */
+/*   Updated: 2021/12/31 19:36:12 by abel-mak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,8 +85,6 @@ void Server::sendResponse(void)
 						_mypoll.clearActiveFd(wReadyFds[i]);
 						close(wReadyFds[i]);
 					}
-					// std::cout << "cleared writeactive and erased" <<
-					// std::endl;
 					_mypoll.clearWriteActiveFd(wReadyFds[i]);
 					_responseData.erase(wReadyFds[i]);
 				}
@@ -100,6 +98,10 @@ void Server::sendResponse(void)
 			else if (errno != EPIPE)
 			{
 				std::cout << strerror(errno) << std::endl;
+				_mypoll.clearActiveFd(wReadyFds[i]);
+				_mypoll.clearWriteActiveFd(wReadyFds[i]);
+				_mypoll.clearWriteFd(wReadyFds[i]);
+				close(wReadyFds[i]);
 			}
 		}
 		i++;
@@ -118,8 +120,10 @@ void Server::run(void)
 	int tmp;
 	char buf[_bufSize];
 	struct Ret hr;
+	bool start;
 
-	while (1)
+	start = _mypoll.isReady();
+	while (start)
 	{
 		readyFds = _mypoll.getReadyfds();
 		if (readyFds.size() > 0)
@@ -141,8 +145,13 @@ void Server::run(void)
 				{
 					outputLogs("server error recv: " +
 					           std::string(strerror(errno)));
+					_mypoll.clearActiveFd(readyFds[i]);
+					_mypoll.clearWriteActiveFd(readyFds[i]);
+					_mypoll.clearWriteFd(readyFds[i]);
+					close(readyFds[i]);
 				}
-				if (checkCrlf(_rawRequest[readyFds[i]]) == true || tmp == 0)
+				else if (checkCrlf(_rawRequest[readyFds[i]]) == true ||
+				         tmp == 0)
 				{
 					hr = handleRequest(_rawRequest[readyFds[i]],
 					                   _mypoll.getData(), (tmp == 0));
