@@ -5,7 +5,6 @@ struct Ret HandleErrors(std::string errorType, std::vector<ServerData> &server_d
 	Response					response;
 	std::string					ln;
 	std::map<int, std::string>	error_pages;
-	int							contentLenght = 0;
 	std::string					error_page_path;
 	std::ifstream				ifs;
 	std::string					str;
@@ -82,7 +81,7 @@ struct Ret  handle_POST_Request(Request &request, std::vector<ServerData> &serve
 		boundary = getToken(request.request_headers.find("Content-Type")->second, "boundary=");
 		boundary = getToken(request.request_headers.find("Content-Type")->second, "boundary=");
 		files = parsePost(request.body, boundary);
-		for (int i = 0; i < files.size(); i++) {
+		for (size_t i = 0; i < files.size(); i++) {
 			files[i].path = uploadLocation + files[i].path;
 			checkvalid(files[i].path);
 			ofs.open(files[i].path);
@@ -287,14 +286,9 @@ struct Ret	HandleCGI(Request &request, std::vector<ServerData> &server_data, RqL
 		return HandleErrors("500 Internal Server Error", server_data, data.server_num);
 	if (request.request_headers.count("Cookie") == 1)
 		param.cookie = request.request_headers.find("Cookie")->second;
-
-	std::cout << param.fastcgipass << std::endl;
-	std::cout << "-------------------------\n";
 	CGI_resp = runCgi(param);
-	std::cout << "\n-------------------------\n";
-
-	std::cout << "{" << CGI_resp << "}\n";
-
+	if (param.execvError == true)
+		return HandleErrors("500 Internal Server Error", server_data, data.server_num);
 	str = CGI_resp;
 	response.status_line = HTTPv1;
 	response.status_line += " ";
@@ -328,14 +322,13 @@ struct Ret handleRequest(std::string buff, std::vector<ServerData> &server_data,
 	method = getToken(request.request_line, SP);
 	ret.safi = false;
 	if (!done && method == "POST") {
-		size_t pos;
-		int pos0 = buff.find("Content-Length:");
+		size_t pos0 = buff.find("Content-Length:");
 		if (pos0 != std::string::npos) {
-			int n = atoi(std::string(buff, pos0+ 15).c_str());
+			long n = atoi(std::string(buff, pos0+ 15).c_str());
 			if (n < 0)
 				return ret;
 			size_t pos1 = buff.find(CRLFCRLF);
-			if (n > std::string(buff, pos1+ 4).length()) {
+			if (static_cast<size_t>(n) > std::string(buff, pos1+ 4).length()) {
 				return ret;
 			}
 		} else 
@@ -365,7 +358,7 @@ struct Ret handleRequest(std::string buff, std::vector<ServerData> &server_data,
 			return HandleErrors("505 HTTP Version Not Supported", server_data, req_line_data.server_num);
 		return HandleErrors("400 Bad Request", server_data, req_line_data.server_num);
 	}
-	if (request.body.length() > server_data[req_line_data.server_num].getClientBodySize() * Mbytes)
+	if (request.body.length() > static_cast<size_t>(server_data[req_line_data.server_num].getClientBodySize() * Mbytes))
 		return HandleErrors("413 Payload Too Large", server_data, req_line_data.server_num);
 	if (req_line_data.locations[req_line_data.location_num].isCGI() == true)
 		return HandleCGI(request, server_data, req_line_data, method);
