@@ -1,0 +1,6 @@
+logs.webserv
+outputParser
+.*.sw*
+a.out
+webserv
+webserv.example.conf

@@ -1,7 +1,10 @@
 #ifndef LOCATION_HPP
 #define LOCATION_HPP
 
-#include "Webserv.hpp"
+//#include "Webserv.hpp"
+#include <iostream>
+#include <map>
+#include <vector>
 
 class Location
 {
@@ -64,4 +67,4 @@ public:
 
 std::ostream &operator<<(std::ostream &, const Location &);
 
-#endif // !LOCATION_HPP
+#endif  // !LOCATION_HPP

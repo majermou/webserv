@@ -1,18 +1,17 @@
-#include "Webserv.hpp"
+#include "../includes/Location.hpp"
 
 char const *Location::standard_allowed_methods[3] = {
-	"GET",
-	"POST",
-	"DELETE",
+    "GET",
+    "POST",
+    "DELETE",
 };
 
-Location::Location() : _path("/"),
-					   _isRedirection(false),
-					   _isCGI(false),
-					   _upload_enable(false)
+Location::Location()
+    : _path("/"), _isRedirection(false), _isCGI(false), _upload_enable(false)
 {
 	for (size_t i = 0; i < 3; i++)
-		_allowed_methods.insert(std::pair<std::string, bool>(standard_allowed_methods[i], false));
+		_allowed_methods.insert(
+		    std::pair<std::string, bool>(standard_allowed_methods[i], false));
 	_allowed_methods["GET"] = true;
 }
 
@@ -25,17 +24,17 @@ Location &Location::operator=(Location const &rhs)
 {
 	if (this != &rhs)
 	{
-		_path = rhs._path;
-		_root_dir = rhs._root_dir;
-		_autoindex = rhs._autoindex;
-		_default_file = rhs._default_file;
+		_path            = rhs._path;
+		_root_dir        = rhs._root_dir;
+		_autoindex       = rhs._autoindex;
+		_default_file    = rhs._default_file;
 		_allowed_methods = rhs._allowed_methods;
-		_return_code = rhs._return_code;
-		_return_url = rhs._return_url;
-		_isRedirection = rhs._isRedirection;
-		_fastcgi_pass = rhs._fastcgi_pass;
-		_isCGI = rhs._isCGI;
-		_upload_enable = rhs._upload_enable;
+		_return_code     = rhs._return_code;
+		_return_url      = rhs._return_url;
+		_isRedirection   = rhs._isRedirection;
+		_fastcgi_pass    = rhs._fastcgi_pass;
+		_isCGI           = rhs._isCGI;
+		_upload_enable   = rhs._upload_enable;
 		_upload_location = rhs._upload_location;
 	}
 	return *this;
@@ -97,7 +96,10 @@ void Location::setAllowedMethods(std::vector<std::string> const &am)
 			if (am[j] == standard_allowed_methods[i])
 				break;
 		if (i == 3)
-			throw std::invalid_argument(am[j] + " is not among standard allowed methods which are only GET, POST and DELETE");
+			throw std::invalid_argument(
+			    am[j] +
+			    " is not among standard allowed methods which are only GET, "
+			    "POST and DELETE");
 		if (_allowed_methods[am[j]] == true)
 			throw std::invalid_argument("duplicated allowed method: " + am[j]);
 		_allowed_methods[am[j]] = true;
@@ -112,7 +114,7 @@ std::map<std::string, bool> const &Location::getAllowedMethods() const
 void Location::setReturnCode(int const &rc)
 {
 	_isRedirection = true;
-	_return_code = rc;
+	_return_code   = rc;
 }
 
 int const &Location::getReturnCode() const
@@ -123,7 +125,7 @@ int const &Location::getReturnCode() const
 void Location::setReturnUrl(std::string const &ru)
 {
 	_isRedirection = true;
-	_return_url = ru;
+	_return_url    = ru;
 }
 
 std::string const &Location::getReturnUrl() const
@@ -179,7 +181,8 @@ std::string const &Location::getUploadLocation() const
 std::ostream &operator<<(std::ostream &out, const Location &loc)
 {
 	out << std::boolalpha;
-	out << "\n================ Location [" << loc.getPath() << "]===============" << std::endl;
+	out << "\n================ Location [" << loc.getPath()
+	    << "]===============" << std::endl;
 	if (!loc.getRootDir().empty())
 		out << " root : [" << loc.getRootDir() << "]" << std::endl;
 	out << " autoindex : [" << loc.getAutoIndex() << "]" << std::endl;
@@ -187,7 +190,8 @@ std::ostream &operator<<(std::ostream &out, const Location &loc)
 		out << " index : [" << loc.getDefaultFile() << "]" << std::endl;
 	std::map<std::string, bool> map(loc.getAllowedMethods());
 	out << " allowed methods:";
-	for (std::map<std::string, bool>::iterator it = map.begin(); it != map.end(); it++)
+	for (std::map<std::string, bool>::iterator it = map.begin();
+	     it != map.end(); it++)
 	{
 		if (map[it->first])
 			out << " [ " << it->first << " ]  ";
@@ -196,7 +200,8 @@ std::ostream &operator<<(std::ostream &out, const Location &loc)
 	if (loc.isRedirection())
 	{
 		out << " Is redirection : " << loc.isRedirection() << std::endl;
-		out << " return, code : [" << loc.getReturnCode() << "], url: [" << loc.getReturnUrl() << "]" << std::endl;
+		out << " return, code : [" << loc.getReturnCode() << "], url: ["
+		    << loc.getReturnUrl() << "]" << std::endl;
 	}
 	if (loc.isCGI())
 	{
@@ -205,7 +210,9 @@ std::ostream &operator<<(std::ostream &out, const Location &loc)
 	}
 	out << " upload enabled : " << loc.getUploadEnabled() << std::endl;
 	if (!loc.getUploadLocation().empty())
-		out << " upload store: [" << loc.getUploadLocation() << "]" << std::endl;
-	out << "============== Location End [" << loc.getPath() << "]===============\n";
+		out << " upload store: [" << loc.getUploadLocation() << "]"
+		    << std::endl;
+	out << "============== Location End [" << loc.getPath()
+	    << "]===============\n";
 	return out;
 }
